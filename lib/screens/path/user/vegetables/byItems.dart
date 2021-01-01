@@ -105,43 +105,32 @@ class _ByItemsState extends State<ByItems> with SingleTickerProviderStateMixin {
                     Expanded(
                       child: SizedBox(
                         child: _itemdetails.length > 0
-                            ? AnimationLimiter(
-                                child: GridView.builder(
-                                  padding: EdgeInsets.only(
-                                      left: 6, right: 4, top: 10, bottom: 75),
-                                  itemCount: _itemdetails.length,
-                                  itemBuilder:
-                                      (BuildContext context, int index) {
-                                    Map items = _itemdetails[index];
-                                    return AnimationConfiguration.staggeredList(
-                                      delay: Duration(milliseconds: 100),
-                                      position: index,
-                                      duration:
-                                          const Duration(milliseconds: 500),
-                                      child: SlideAnimation(
-                                        verticalOffset: 50.0,
-                                        child: ItemsContainer(
-                                            image: '${items['image']}',
-                                            title: '${items['name']}',
-                                            en: '${items['en']}',
-                                            // amount: items['amount'],
-                                            amount: 0,
-                                            quantity: items['quantity'],
-                                            unit: '${items['unit']}',
-                                            index: index,
-                                            isClosed: widget.isClosed,
-                                            available: items['available'],
-                                            shopName: widget.title,
-                                            imageType: items['imageType']),
-                                      ),
-                                    );
-                                  },
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 3,
-                                          crossAxisSpacing: 5,
-                                          mainAxisSpacing: 5),
-                                ),
+                            ? GridView.builder(
+                                padding: EdgeInsets.only(
+                                    left: 6, right: 4, top: 10, bottom: 75),
+                                itemCount: _itemdetails.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  Map items = _itemdetails[index];
+                                  return ItemsContainer(
+                                      image: '${items['image']}',
+                                      title: '${items['name']}',
+                                      en: '${items['en']}',
+                                      // amount: items['amount'],
+                                      amount: 0,
+                                      quantity:
+                                          double.parse('${items['quantity']}'),
+                                      unit: '${items['unit']}',
+                                      index: index,
+                                      isClosed: widget.isClosed,
+                                      available: items['available'],
+                                      shopName: widget.title,
+                                      imageType: items['imageType']);
+                                },
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 3,
+                                        crossAxisSpacing: 5,
+                                        mainAxisSpacing: 5),
                               )
                             : Container(
                                 child: Column(

@@ -10,7 +10,7 @@ class ViewCartBottomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<IsInList>(builder: (context, isInList, child) {
       var _allDetailsList = isInList.allDetails ?? [];
-      int totalQ = isInList.totalQ ?? 0;
+      double totalQ = isInList.totalQ ?? 0.0;
       return Material(
         child: InkWell(
           onTap: () async {

@@ -16,8 +16,8 @@ class ItemsContainer extends StatefulWidget {
   final String image;
   final String title;
   final String en;
-  final amount;
-  final int quantity;
+  final int amount;
+  final double quantity;
   final String unit;
   final int index;
   final String imageType;
@@ -42,8 +42,8 @@ class ItemsContainer extends StatefulWidget {
 }
 
 class _ItemsContainerState extends State<ItemsContainer> {
-  var _quantity = 0;
-  var _amount = 0;
+  double _quantity = 0.0;
+  int _amount = 0;
   var _image;
   var _name;
   var index;
@@ -54,7 +54,6 @@ class _ItemsContainerState extends State<ItemsContainer> {
   void _onpress;
   ScrollController _scrollController = ScrollController();
   TextEditingController _textEditingController = TextEditingController();
-  FocusNode _focus = new FocusNode();
 
   @override
   void initState() {
@@ -62,13 +61,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
     disposing = false;
     initFunctions();
     _quantity = widget.quantity;
-    _textEditingController.text = '1';
-// pasted here to test there is blink effect;
-//     KeyboardVisibilityNotification().addNewListener(onHide: () {
-//       _scrollController.animateTo(0,
-//           duration: Duration(milliseconds: 200), curve: Curves.linear);
-//     });
-    _focus.addListener(_onFocusChange);
+    _textEditingController.text = '';
     super.initState();
   }
 
@@ -85,7 +78,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
     _name = '${widget.title}';
   }
 
-  void onPressed(String whatButton, int inputQuantity) async {
+  void onPressed(String whatButton, double inputQuantity) async {
     Map individualItem = {
       'name': '$_name',
       'en': widget.en,
@@ -133,7 +126,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
       var dataByName =
           Provider.of<IsInList>(context, listen: false).getDetailsByName(_name);
       _amount = dataByName != null ? dataByName['amount'] : 0;
-      _quantity = dataByName != null ? dataByName['quantity'] : 0;
+      _quantity = dataByName != null ? dataByName['quantity'] : 0.0;
     }
   }
 
@@ -152,10 +145,11 @@ class _ItemsContainerState extends State<ItemsContainer> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    getProviderData();
+    // getProviderData();
     initFunctions();
     bool _detail = false;
-    var _providerDataList = Provider.of<IsInList>(context).allDetails ?? [];
+    var _providerDataList =
+        Provider.of<IsInList>(context, listen: true).allDetails ?? [];
     Map providerData;
     for (var _details in _providerDataList) {
       if (_details['name'] == _name) {
@@ -168,6 +162,9 @@ class _ItemsContainerState extends State<ItemsContainer> {
     }
     return InkWell(
       onTap: () {
+        if (providerData != null) {
+          _textEditingController.text = '${providerData['quantity']}';
+        }
         showBottomSheet();
       },
       child: Container(
@@ -225,7 +222,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
                     ? Positioned(
                         child: Container(
                         width: size.width / 3 - 8.7,
-                        height: 20,
+                        height: 30,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
@@ -262,7 +259,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
 
   Future<List> showBottomSheet() {
     return showModalBottomSheet<List>(
-      isScrollControlled: false,
+      isScrollControlled: true,
       context: context,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
@@ -273,21 +270,21 @@ class _ItemsContainerState extends State<ItemsContainer> {
         return StatefulBuilder(builder: (context, StateSetter setState) {
           Size size = MediaQuery.of(context).size;
           return SingleChildScrollView(
-            controller: _scrollController,
             child: Container(
               padding: EdgeInsets.all(8),
-              height: size.height - 100,
+              height: size.height * (3 / 4.8),
               // color: Colors.white,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SizedBox(height: 5),
-                  Stack(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                          width: size.width,
-                          height: 140,
+                          width: 90,
+                          height: 70,
                           child: widget.imageType != 'offline'
                               ? CachedNetworkImage(
                                   imageUrl: '${widget.image}',
@@ -302,6 +299,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
                                   '${widget.image}',
                                   fit: BoxFit.cover,
                                 )),
+                      SizedBox(width: 20),
                       Material(
                         color: Colors.white,
                         elevation: 4,
@@ -333,17 +331,13 @@ class _ItemsContainerState extends State<ItemsContainer> {
                               children: [
                                 SizedBox(
                                   child: TextField(
-                                    focusNode: _focus,
                                     controller: _textEditingController,
+                                    autofocus: true,
                                     textAlign: TextAlign.center,
                                     style:
                                         TextStyle(fontWeight: FontWeight.w600),
                                     keyboardType: TextInputType.number,
-                                    onTap: () {
-                                      _scrollController.animateTo(130,
-                                          duration: Duration(milliseconds: 200),
-                                          curve: Curves.linear);
-                                    },
+                                    onTap: () {},
                                     decoration: InputDecoration(
                                       //fillColor: Colors.green
                                       hintText: 'quantity',
@@ -403,18 +397,12 @@ class _ItemsContainerState extends State<ItemsContainer> {
                                             FocusScopeNode currentFocus =
                                                 FocusScope.of(context);
 
-                                            if (!currentFocus.hasPrimaryFocus) {
-                                              currentFocus.unfocus();
-                                              _scrollController.animateTo(0,
-                                                  duration: Duration(
-                                                      milliseconds: 200),
-                                                  curve: Curves.linear);
-                                            }
                                             Navigator.pop(context);
                                             onPressed(
                                                 'add',
-                                                int.parse(_textEditingController
-                                                    .text));
+                                                double.parse(
+                                                    _textEditingController
+                                                        .text));
                                           },
                                           child: Container(
                                             alignment: Alignment.center,

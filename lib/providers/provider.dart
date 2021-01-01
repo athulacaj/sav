@@ -10,10 +10,10 @@ void saveUserData(Map userData) async {
   localData.setString('userNew', user);
 }
 
-int calculateTotalQuantity(var allDetails) {
-  int totalQ = 0;
+double calculateTotalQuantity(var allDetails) {
+  double totalQ = 0;
   for (var _alldetail in allDetails) {
-    totalQ = totalQ + _alldetail['quantity'] ?? 0;
+    totalQ = totalQ + _alldetail['quantity'] ?? 0.0;
   }
   return totalQ;
 }
@@ -22,7 +22,7 @@ class IsInList extends ChangeNotifier {
 //  bool isInList = false;
   List allDetails = []; //cart items
   int indianHour = 24;
-  int totalQ;
+  double totalQ;
   Map userDetails;
   String userName;
   bool showSpinner = false;

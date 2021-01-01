@@ -56,5 +56,4 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 dependencies {
     implementation 'androidx.multidex:multidex:2.0.0'
-    implementation 'com.google.firebase:firebase-messaging:20.2.4'
 }

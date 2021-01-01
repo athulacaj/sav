@@ -247,31 +247,85 @@ class TestPrint {
 //     Uint8List bytes = response.bodyBytes;
     bluetooth.isConnected.then((isConnected) {
       if (isConnected) {
+        bluetooth.printCustom("Sales Order", 3, 1);
         bluetooth.printNewLine();
-        bluetooth.printCustom("HEADER", 3, 1);
+        bluetooth.printCustom("  Shop Name : Acaj veg shop", 1, 1);
         bluetooth.printNewLine();
-        // bluetooth.printImage(pathImage); //path of your image/logo
-        // bluetooth.printNewLine();
-//      bluetooth.printImageBytes(bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
-        bluetooth.printLeftRight("LEFT", "RIGHT", 0);
-        bluetooth.printLeftRight("LEFT", "RIGHT", 1);
-        bluetooth.printNewLine();
-        bluetooth.printLeftRight("LEFT", "RIGHT", 2);
-        bluetooth.printLeftRight("LEFT", "RIGHT", 3);
-        bluetooth.printLeftRight("LEFT", "RIGHT", 4);
-        // String testString = " čĆžŽšŠ-H-ščđ";
-        // bluetooth.printCustom(testString, 1, 1, charset: "windows-1250");
-        // bluetooth.printLeftRight("Številka:", "18000001", 1,
-        //     charset: "windows-1250");
-        bluetooth.printCustom("Body left", 1, 0);
-        bluetooth.printCustom("Body right", 0, 2);
-        bluetooth.printNewLine();
-        bluetooth.printCustom("Thank You", 2, 1);
-        bluetooth.printNewLine();
-        bluetooth.printNewLine();
+        bluetooth.printLeftRight("Ref no :123", "Date :12-07-2020", 1);
+        bluetooth.printCustom(
+            "--------------------------------------------------------------",
+            0,
+            0);
+        bluetooth.printCustom(
+            "${spacedTextForHeading('SL', 20)}${spacedTextForHeading('ITEM', 50)}${spacedTextForHeading('QTY', 30)}",
+            1,
+            0);
+        bluetooth.printCustom(
+            "--------------------------------------------------------------",
+            0,
+            0);
+        bluetooth.printCustom(
+            "${spacedTextAlignLeft('  1', 20)}${spacedTextAlignLeft('  Cauliflower', 40)}${spacedTextAlignRight('30 kg', 40)}",
+            0,
+            0);
+        bluetooth.printCustom(
+            "${spacedTextAlignLeft('  2', 20)}${spacedTextAlignLeft('  Cabbage', 40)}${spacedTextAlignRight('50 kg', 40)}",
+            0,
+            0);
+        bluetooth.printCustom(
+            "--------------------------------------------------------------",
+            0,
+            0);
+
+        // print total
+        bluetooth.printCustom("Total : 100 kg", 1, 1);
+
         bluetooth.printNewLine();
         bluetooth.paperCut();
       }
     });
   }
+}
+
+String spacedTextForHeading(String text, int percent) {
+  int total = 50;
+  int spaceForText = ((total * percent) / 100).floor();
+  int spaceToAdd = ((spaceForText - text.length) / 2).floor();
+  print(spaceToAdd);
+  String space = makeSpaceForHeading(spaceToAdd);
+  return '$space$text$space|';
+}
+
+String spacedTextAlignLeft(String text, int percent) {
+  int total = 64;
+  int spaceForText = ((total * percent) / 100).floor();
+  int spaceToAdd = ((spaceForText - text.length) / 2).floor();
+  print(spaceToAdd);
+  String space = makeSpace(spaceToAdd);
+  return '$text$space$space';
+}
+
+String spacedTextAlignRight(String text, int percent) {
+  int total = 64;
+  int spaceForText = ((total * percent) / 100).floor();
+  int spaceToAdd = ((spaceForText - text.length) / 2).floor();
+  print(spaceToAdd);
+  String space = makeSpace(spaceToAdd);
+  return '$space$space$text';
+}
+
+String makeSpaceForHeading(int t) {
+  String toReturn = '';
+  for (int i = 0; i < t - 1; i++) {
+    toReturn = toReturn + " ";
+  }
+  return toReturn;
+}
+
+String makeSpace(int t) {
+  String toReturn = '';
+  for (int i = 0; i < t; i++) {
+    toReturn = toReturn + " ";
+  }
+  return toReturn;
 }

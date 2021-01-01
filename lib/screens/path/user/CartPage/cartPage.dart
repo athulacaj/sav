@@ -249,7 +249,7 @@ class _CartPageState extends State<CartPage> {
                             Consumer<IsInList>(
                                 builder: (context, isInList, child) {
                               return Text(
-                                '${isInList.allDetails.length} kg',
+                                '${isInList.totalQ} kg',
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 17,
@@ -458,7 +458,7 @@ class _CartPageState extends State<CartPage> {
                                       Navigator.pop(context);
                                       onPressed(
                                           'add',
-                                          int.parse(
+                                          double.parse(
                                               _textEditingController.text),
                                           _allDetailsList);
                                     },
@@ -565,7 +565,7 @@ class _CartPageState extends State<CartPage> {
   }
 
   void onPressed(
-      String whatButton, int inputQuantity, var _allDetailsList) async {
+      String whatButton, double inputQuantity, var _allDetailsList) async {
     if (whatButton == 'add') {
       Map individualItem = {
         'name': '${_allDetailsList['name']}',
