@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:animated_icon_button/animated_icon_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import 'package:sav/providers/provider.dart';
 import 'package:sav/providers/searchProvider.dart';
 import 'itemsContainer.dart';
 import 'package:sav/screens/path/user/ViewCart_BottomNavBar.dart';
+import 'cartBadge.dart';
 
 var _details;
 List _itemdetails;
@@ -90,8 +90,11 @@ class _ByItemsState extends State<ByItems> with SingleTickerProviderStateMixin {
     _cartItemsList = [];
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xff3FD4A2),
+        backgroundColor: Color(0xff36b58b),
         title: Text(widget.title),
+        actions: [
+          CartBadge(),
+        ],
       ),
       body: Consumer<SearchProvider>(
         builder: (context, value, Widget child) {

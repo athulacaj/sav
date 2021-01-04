@@ -4,12 +4,15 @@ import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:provider/provider.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:sav/screens/path/user/vegetables/byItems.dart';
-import 'package:sav/brain/vegitableMap.dart';
 import 'Carousel.dart';
 import 'drawer/drawer.dart';
 import 'extractedBox.dart';
 import 'package:sav/screens/path/admin/adminHomeScreen.dart';
 import 'package:sav/screens/path/user/MyOrders/MyOrders.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'cartBadge.dart';
+import 'package:flutter/services.dart';
+import 'package:sav/firebaseMessaging.dart';
 
 Widget carousel;
 bool _showSpinner = false;
@@ -30,16 +33,32 @@ class _HomeScreenState extends State<HomeScreen>
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
   @override
   void initState() {
+    super.initState();
+    getFcmToken();
     _tabController = TabController(length: 2, vsync: this);
-    List ads = [
-      'https://www.jantabazar.com/images/2.jpg',
-      'https://images.freekaamaal.com/post_images/1545982779.PNG'
-    ];
-    imageSliders = getImageSliders(ads);
+
     _scrollController.addListener(() {
       print(_scrollController.offset);
     });
-    super.initState();
+    getAds();
+  }
+
+  getFcmToken() async {
+    FireBaseMessagingClass fireBaseMessagingClass =
+        FireBaseMessagingClass(context);
+    fireBaseMessagingClass.firebaseConfigure();
+    String fcmId = await fireBaseMessagingClass.getFirebaseToken();
+    Provider.of<IsInList>(context, listen: false).setFcmId(fcmId);
+    fireBaseMessagingClass.fcmSubscribe();
+  }
+
+  void getAds() async {
+    DocumentSnapshot snap =
+        await _firestore.collection('home').doc('ads').get();
+    List temp = snap.data()['ads'];
+    List ads = temp.reversed.toList();
+    imageSliders = getImageSliders(ads);
+    setState(() {});
   }
 
   ScrollController _scrollController = ScrollController();
@@ -56,10 +75,10 @@ class _HomeScreenState extends State<HomeScreen>
     var size = MediaQuery.of(context).size;
     Map _userDetails =
         Provider.of<IsInList>(context, listen: false).userDetails;
-
     if (_showSpinner == false) {
       carousel = makeCarouousel(imageSliders, size);
     }
+
     return ModalProgressHUD(
       inAsyncCall: _showSpinner,
       child: Scaffold(
@@ -76,9 +95,10 @@ class _HomeScreenState extends State<HomeScreen>
             },
           ),
           actions: [
-            IconButton(
-                icon: Icon(Icons.notifications, color: Colors.white),
-                onPressed: () {})
+            CartBadge(),
+            // IconButton(
+            //     icon: Icon(Icons.notifications, color: Colors.white),
+            //     onPressed: () {})
           ],
         ),
         body: SingleChildScrollView(
@@ -234,46 +254,52 @@ class _HomeScreenState extends State<HomeScreen>
                                       ],
                                     ),
                                     SizedBox(height: 20),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        GestureDetector(
-                                          child: ExtractedBox(
-                                              image: 'assets/admin.png',
-                                              title: 'Admin Pannel'),
-                                          onTap: () {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        AdminHomeScreen()));
-                                          },
-                                        ),
-                                        GestureDetector(
-                                          child: ExtractedBox(
-                                              // image: 'assets/vegetables.jpg',
-                                              title: 'Save'),
-                                          onTap: () async {
-                                            _showSpinner = true;
-                                            DateTime now = DateTime.now();
-                                            setState(() {});
-                                            DocumentSnapshot snap =
-                                                await _firestore
-                                                    .collection('items')
-                                                    .doc('vegetables')
-                                                    .get();
-                                            await _firestore
-                                                .collection('backUp')
-                                                .doc(
-                                                    '${now.millisecondsSinceEpoch} veg')
-                                                .set(snap.data());
-                                            _showSpinner = false;
-                                            setState(() {});
-                                          },
-                                        ),
-                                      ],
-                                    ),
+                                    _userDetails['isAdmin'] != null
+                                        ? _userDetails['isAdmin']
+                                            ? Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  GestureDetector(
+                                                    child: ExtractedBox(
+                                                        image:
+                                                            'assets/admin.png',
+                                                        title: 'Admin Pannel'),
+                                                    onTap: () {
+                                                      Navigator.push(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder: (context) =>
+                                                                  AdminHomeScreen()));
+                                                    },
+                                                  ),
+                                                  // GestureDetector(
+                                                  //   child: ExtractedBox(
+                                                  //       // image: 'assets/vegetables.jpg',
+                                                  //       title: 'Save'),
+                                                  //   onTap: () async {
+                                                  //     _showSpinner = true;
+                                                  //     DateTime now = DateTime.now();
+                                                  //     setState(() {});
+                                                  //     DocumentSnapshot snap =
+                                                  //         await _firestore
+                                                  //             .collection('items')
+                                                  //             .doc('vegetables')
+                                                  //             .get();
+                                                  //     await _firestore
+                                                  //         .collection('backUp')
+                                                  //         .doc(
+                                                  //             '${now.millisecondsSinceEpoch} veg')
+                                                  //         .set(snap.data());
+                                                  //     _showSpinner = false;
+                                                  //     setState(() {});
+                                                  //   },
+                                                  // ),
+                                                ],
+                                              )
+                                            : Container()
+                                        : Container(),
                                   ],
                                 ),
                                 maintainState: true,

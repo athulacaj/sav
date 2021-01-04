@@ -14,9 +14,10 @@ import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:sav/screens/authPage/auth/ExtractedButton.dart';
-import 'package:sav/screens/path/user/homeScreen/homeScreen.dart';
+import 'package:sav/screens/path/user/homeScreen/home.dart';
 import 'autoVerify.dart';
 import 'newUser.dart';
+import 'package:sav/firebaseMessaging.dart';
 
 class PhoneLoginScreen extends StatefulWidget {
   static String id = 'Login_Screen';
@@ -422,6 +423,9 @@ void afterVerification(BuildContext context, String uid, String phoneNo) async {
                 )));
   } else {
     Map userData = snap.data();
+    if (userData['isAdmin']) {
+      firebaseMessaging.subscribeToTopic('admin');
+    }
     Map _userDetails = {
       'phone': userData['phone'],
       'name': userData['name'],

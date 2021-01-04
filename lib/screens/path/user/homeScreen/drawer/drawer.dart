@@ -6,6 +6,7 @@ import 'package:sav/constants/constants.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:sav/screens/authPage/phoneAuth/login.dart';
 import 'package:sav/screens/path/user/MyOrders/MyOrders.dart';
+import 'package:sav/firebaseMessaging.dart';
 
 bool _showSPinner = false;
 
@@ -116,6 +117,10 @@ class MyDrawer extends StatelessWidget {
                                   // await _auth.signOut();
                                   Provider.of<IsInList>(context, listen: false)
                                       .addUser(null);
+                                  try {
+                                    firebaseMessaging
+                                        .unsubscribeFromTopic('admin');
+                                  } catch (e) {}
                                 },
                                 child: Container(
                                   height: 35,

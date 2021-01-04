@@ -12,7 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'authPage/phoneAuth/login.dart';
-import 'package:sav/screens/path/user/homeScreen/homeScreen.dart';
+import 'package:sav/screens/path/user/homeScreen/home.dart';
 
 import 'path/admin/adminHomeScreen.dart';
 
@@ -89,8 +89,9 @@ class _SplashScreenWindowState extends State<SplashScreenWindow> {
       progressIndicator: RefreshProgressIndicator(),
       inAsyncCall: _showSpinner,
       child: Scaffold(
+        backgroundColor: Color(0xff36b58b),
         body: Center(
-          child: Image.asset('assets/logo.png'),
+          child: Image.asset('assets/splash.png'),
         ),
       ),
     );

@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:sav/screens/authPage/auth/ExtractedButton.dart';
 import 'package:sav/screens/authPage/auth/constants.dart';
-import 'package:sav/screens/path/user/homeScreen/homeScreen.dart';
+import 'package:sav/screens/path/user/homeScreen/home.dart';
 
 class NewUser extends StatefulWidget {
   final String phoneNo;
@@ -148,6 +148,7 @@ class _NewUserState extends State<NewUser> {
                       'town': town,
                       'shopName': shopName,
                       'uid': widget.uid,
+                      'isAdmin': false,
                     });
                     Map _userDetails = {
                       'phone': widget.phoneNo,
@@ -156,6 +157,7 @@ class _NewUserState extends State<NewUser> {
                       'shopName': shopName,
                       'email': widget.phoneNo,
                       'uid': widget.uid,
+                      'isAdmin': false,
                     };
                     print(_userDetails);
                     Provider.of<IsInList>(context, listen: false)

@@ -96,7 +96,7 @@ class _AllOrdersState extends State<AllOrders> {
         stream: _firestore
             .collection(
                 'orders/byTime/${_whichDay.toString().substring(0, 10)}')
-            .where('uid', isEqualTo: adminData['uid'])
+            // .where('uid', isEqualTo: adminData['uid'])
             // .orderBy('time', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
@@ -201,12 +201,12 @@ class _AllOrdersState extends State<AllOrders> {
                                 }
                                 print(_allOrdersFiltered[0].id);
 
-                                // Navigator.push(
-                                //     context,
-                                //     MaterialPageRoute(
-                                //         builder: (BuildContext context) =>
-                                //             MutipleThermalPrint(
-                                //                 itemsToPrint, selected)));
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (BuildContext context) =>
+                                            MultipleThermalPrint(
+                                                itemsToPrint, selected)));
                               },
                             ),
                             Spacer(),

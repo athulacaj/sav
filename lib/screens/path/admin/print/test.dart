@@ -243,8 +243,6 @@ class TestPrint {
     // 1- ESC_ALIGN_CENTER
     // 2- ESC_ALIGN_RIGHT
 
-//     var response = await http.get("IMAGE_URL");
-//     Uint8List bytes = response.bodyBytes;
     bluetooth.isConnected.then((isConnected) {
       if (isConnected) {
         bluetooth.printCustom("Sales Order", 3, 1);

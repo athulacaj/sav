@@ -7,6 +7,9 @@ import 'manageItems/extracted.dart';
 import 'orders/AllOders.dart';
 import 'print/widgetToImage.dart';
 import 'print/test.dart';
+import 'package:sav/screens/path/admin/addAds/addAds.dart';
+import 'package:sav/screens/path/admin/addAds/manageAds.dart';
+import 'package:sav/screens/path/admin/send notification/sendNotification.dart';
 
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -37,91 +40,147 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         ),
         body: Padding(
           padding: const EdgeInsets.all(12.0),
-          child: Column(
-            children: [
-              HomeBox(
-                icon: Icons.menu_book,
-                title: 'Orders',
-                onclick: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AllOrders()));
-                },
-              ),
-              SizedBox(height: 15),
-              FlatButton(
-                child: Text('print'),
-                onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => Print()));
-                },
-                color: Colors.blueAccent,
-              ),
-              SizedBox(height: 15),
-              HomeBox(
-                icon: Icons.add,
-                title: 'Add items',
-                onclick: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AddItemsIndex()));
-                },
-              ),
-              SizedBox(height: 25),
-              Divider(),
-              Text('Edit Items'),
-              SizedBox(height: 15),
-              SizedBox(
-                width: size.width,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                HomeBox(
+                  icon: Icons.menu_book,
+                  title: 'Orders',
+                  onclick: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => AllOrders()));
+                  },
+                ),
+                SizedBox(height: 15),
+                // FlatButton(
+                //   child: Text('print'),
+                //   onPressed: () {
+                //     Navigator.push(context,
+                //         MaterialPageRoute(builder: (context) => Print()));
+                //   },
+                //   color: Colors.blueAccent,
+                // ),
+                // SizedBox(height: 15),
+                HomeBox(
+                  icon: Icons.add,
+                  title: 'Add items',
+                  onclick: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => AddItemsIndex()));
+                  },
+                ),
+                SizedBox(height: 25),
+                Divider(),
+                Text('Edit Items'),
+                SizedBox(height: 15),
+                SizedBox(
+                  width: size.width,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        child: EditBox(
+                            image: 'assets/vegetables.jpg',
+                            title: 'Vegetables'),
+                        onTap: () async {
+                          _showSpinner = true;
+                          setState(() {});
+                          DocumentSnapshot doc = await _firestore
+                              .collection('items')
+                              .doc('vegetables')
+                              .get();
+                          List allInfo = doc.data()['allInfo'];
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) => EditItems(
+                                        allInfo: allInfo,
+                                        category: 'vegetables',
+                                      )));
+                          _showSpinner = false;
+                          setState(() {});
+                        },
+                      ),
+                      GestureDetector(
+                        child: EditBox(
+                            image: 'assets/unakameen.jpg', title: 'Dry Fish '),
+                        onTap: () async {
+                          _showSpinner = true;
+                          setState(() {});
+                          DocumentSnapshot doc = await _firestore
+                              .collection('items')
+                              .doc('driedFish')
+                              .get();
+                          List allInfo = doc.data()['allInfo'];
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) => EditItems(
+                                        allInfo: allInfo,
+                                        category: 'driedFish',
+                                      )));
+                          _showSpinner = false;
+                          setState(() {});
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 15),
+                Divider(),
+
+                Row(
                   children: [
-                    GestureDetector(
-                      child: EditBox(
-                          image: 'assets/vegetables.jpg', title: 'Vegetables'),
-                      onTap: () async {
-                        _showSpinner = true;
-                        setState(() {});
-                        DocumentSnapshot doc = await _firestore
-                            .collection('items')
-                            .doc('vegetables')
-                            .get();
-                        List allInfo = doc.data()['allInfo'];
+                    FlatButton(
+                      color: Colors.lightBlue,
+                      child: Text(
+                        'Add ads',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onPressed: () {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (BuildContext context) => EditItems(
-                                      allInfo: allInfo,
-                                      category: 'vegetables',
-                                    )));
-                        _showSpinner = false;
-                        setState(() {});
+                                builder: (context) => AddAds('add ads')));
                       },
                     ),
-                    GestureDetector(
-                      child: EditBox(
-                          image: 'assets/unakameen.jpg', title: 'Dry Fish '),
-                      onTap: () async {
-                        _showSpinner = true;
-                        setState(() {});
-                        DocumentSnapshot doc = await _firestore
-                            .collection('items')
-                            .doc('driedFish')
-                            .get();
-                        List allInfo = doc.data()['allInfo'];
+                    Spacer(),
+                    FlatButton(
+                      color: Colors.lightBlue,
+                      child: Text(
+                        'Manage Ads',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onPressed: () {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (BuildContext context) => EditItems(
-                                      allInfo: allInfo,
-                                      category: 'driedFish',
-                                    )));
-                        _showSpinner = false;
-                        setState(() {});
+                                builder: (context) => ManageAds('Manage Ads')));
                       },
                     ),
                   ],
                 ),
-              ),
-            ],
+                SizedBox(height: 15),
+
+                FlatButton(
+                  color: Colors.lightBlue,
+                  child: Text(
+                    'Send notification',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SendPushNotification()));
+                  },
+                ),
+                SizedBox(height: 15),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,3 +1,12 @@
+import 'package:blue_thermal_printer/blue_thermal_printer.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:async';
+
 // import 'dart:typed_data';
 // import 'package:flutter/material.dart';
 // import 'package:esc_pos_bluetooth/esc_pos_bluetooth.dart';
@@ -140,8 +149,8 @@
 //
 //   Future<Ticket> _ticket(PaperSize paper) async {
 //     final ticket = Ticket(paper);
-//     int i = 0;
 //     ticket.cut();
+//     int i = 0;
 //     for (DocumentSnapshot snap in widget.allData) {
 //       int refNo = widget.refNoList[i];
 //       Map userData = snap.data()['userData'];
@@ -331,3 +340,356 @@
 //   }
 //   return totalQ;
 // }
+
+class MultipleThermalPrint extends StatefulWidget {
+  final List<DocumentSnapshot> allData;
+  final List<int> refNoList;
+  MultipleThermalPrint(this.allData, this.refNoList);
+  @override
+  _MultipleThermalPrintState createState() => _MultipleThermalPrintState();
+}
+
+class _MultipleThermalPrintState extends State<MultipleThermalPrint> {
+  BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
+
+  List<BluetoothDevice> _devices = [];
+  BluetoothDevice _device;
+  bool _connected = false;
+  String pathImage;
+  TestPrint testPrint;
+  @override
+  void initState() {
+    super.initState();
+    initPlatformState();
+    testPrint = TestPrint(allData: widget.allData, refNoList: widget.refNoList);
+  }
+
+  double totalQuantity(List details) {
+    double totalQ = 0;
+    for (Map data in details) {
+      totalQ = totalQ + data['quantity'];
+    }
+    return totalQ;
+  }
+
+  Future<void> initPlatformState() async {
+    bool isConnected = await bluetooth.isConnected;
+    List<BluetoothDevice> devices = [];
+    try {
+      devices = await bluetooth.getBondedDevices();
+    } on PlatformException {
+      // TODO - Error
+    }
+
+    bluetooth.onStateChanged().listen((state) {
+      switch (state) {
+        case BlueThermalPrinter.CONNECTED:
+          setState(() {
+            _connected = true;
+          });
+          break;
+        case BlueThermalPrinter.DISCONNECTED:
+          setState(() {
+            _connected = false;
+          });
+          break;
+        default:
+          print(state);
+          break;
+      }
+    });
+
+    if (!mounted) return;
+    setState(() {
+      _devices = devices;
+    });
+
+    if (isConnected) {
+      setState(() {
+        _connected = true;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color(0xff36b58b),
+        title: Text('Print Multiple Order'),
+      ),
+      body: Container(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ListView(
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  SizedBox(
+                    width: 10,
+                  ),
+                  Text(
+                    'Device:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 30,
+                  ),
+                  Expanded(
+                    child: DropdownButton(
+                      items: _getDeviceItems(),
+                      onChanged: (value) => setState(() => _device = value),
+                      value: _device,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  RaisedButton(
+                    color: Colors.brown,
+                    onPressed: () {
+                      initPlatformState();
+                    },
+                    child: Text(
+                      'Refresh',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 20,
+                  ),
+                  RaisedButton(
+                    color: _connected ? Colors.red : Colors.green,
+                    onPressed: _connected ? _disconnect : _connect,
+                    child: Text(
+                      _connected ? 'Disconnect' : 'Connect',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.only(left: 10.0, right: 10.0, top: 50),
+                child: RaisedButton(
+                  color: Colors.brown,
+                  onPressed: () {
+                    testPrint.sample(pathImage);
+                  },
+                  child: Text('Print Order',
+                      style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<DropdownMenuItem<BluetoothDevice>> _getDeviceItems() {
+    List<DropdownMenuItem<BluetoothDevice>> items = [];
+    if (_devices.isEmpty) {
+      items.add(DropdownMenuItem(
+        child: Text('NONE'),
+      ));
+    } else {
+      _devices.forEach((device) {
+        items.add(DropdownMenuItem(
+          child: Text(device.name),
+          value: device,
+        ));
+      });
+    }
+    return items;
+  }
+
+  void _connect() {
+    if (_device == null) {
+      show('No device selected.');
+    } else {
+      bluetooth.isConnected.then((isConnected) {
+        if (!isConnected) {
+          bluetooth.connect(_device).catchError((error) {
+            setState(() => _connected = false);
+          });
+          setState(() => _connected = true);
+        }
+      });
+    }
+  }
+
+  void _disconnect() {
+    bluetooth.disconnect();
+    setState(() => _connected = true);
+  }
+
+//write to app path
+  Future<void> writeToFile(ByteData data, String path) {
+    final buffer = data.buffer;
+    return new File(path).writeAsBytes(
+        buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+  }
+
+  Future show(
+    String message, {
+    Duration duration: const Duration(seconds: 3),
+  }) async {
+    await new Future.delayed(new Duration(milliseconds: 100));
+    Scaffold.of(context).showSnackBar(
+      new SnackBar(
+        content: new Text(
+          message,
+          style: new TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        duration: duration,
+      ),
+    );
+  }
+}
+
+class TestPrint {
+  final List allData;
+  final List refNoList;
+  TestPrint({@required this.allData, this.refNoList});
+  BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
+  double totalQuantity(List details) {
+    double totalQ = 0;
+    for (Map data in details) {
+      totalQ = totalQ + data['quantity'];
+    }
+    return totalQ;
+  }
+
+  sample(String pathImage) async {
+    bluetooth.isConnected.then((isConnected) {
+      if (isConnected) {
+        int i = 0;
+        for (DocumentSnapshot snap in allData) {
+          int refNo = refNoList[i];
+          Map userData = snap.data()['userData'];
+          List orderData = snap.data()['details'];
+
+          Timestamp timestamp = snap.data()['time'];
+          DateTime date = timestamp.toDate();
+          var now = new DateTime.now();
+          var formatter = new DateFormat('dd-MM-yyyy');
+          String formattedDate = formatter.format(date);
+          bluetooth.printCustom("Sales Order", 3, 1);
+          bluetooth.printNewLine();
+          bluetooth.printNewLine();
+          bluetooth.printLeftRight("RefNo: $refNo", "Date : $formattedDate", 1);
+          bluetooth.printCustom(
+              "--------------------------------------------------------------",
+              0,
+              0);
+          bluetooth.printCustom(
+              "${spacedTextForHeading('SL', 20)}${spacedTextForHeading('ITEM', 50)}${spacedTextForHeading('QTY', 30)}",
+              1,
+              0);
+          bluetooth.printCustom(
+              "--------------------------------------------------------------",
+              0,
+              0);
+          for (var i = 0; i < orderData.length; i++) {
+            // bluetooth.printLeftRight(
+            // "${spacedTextAlignSL('${(i + 1) * 70}', 20)}${spacedTextAlignName('    ${orderData[i]['en']}', 50)}",
+            // "${spacedTextAlignRight(' ${orderData[i]['quantity']} kg', 30)}",
+            // 0);
+            bluetooth.printLeftRight(
+                "${spacedTextAlignSL('${(i + 1)}', 20)}  ${orderData[i]['en']}",
+                "${orderData[i]['quantity']} kg",
+                1);
+          }
+          bluetooth.printCustom(
+              "--------------------------------------------------------------",
+              0,
+              0);
+
+          // print total
+          bluetooth.printCustom(
+              " Total : ${totalQuantity(orderData)} kg", 1, 1);
+          bluetooth.printCustom(
+              "--------------------------------------------------------------",
+              0,
+              0);
+
+          bluetooth.printCustom(
+              "Shop:  ${userData['shopName']}  / ${userData['name'].toString().toUpperCase()}  ",
+              1,
+              1);
+          bluetooth.printNewLine();
+          bluetooth.printNewLine();
+          bluetooth.paperCut();
+
+          i++;
+        }
+      }
+    });
+  }
+}
+
+String spacedTextForHeading(String text, int percent) {
+  int total = 50;
+  int spaceForText = ((total * percent) / 100).floor();
+  int spaceToAdd = ((spaceForText - text.length) / 2).floor();
+  print(spaceToAdd);
+  String space = makeSpaceForHeading(spaceToAdd);
+  return '$space$text$space|';
+}
+
+String spacedTextAlignSL(String text, int percent) {
+  if (text.length == 1) {
+    return '  $text${makeSpace(6)}';
+  } else if (text.length == 2) {
+    return '  $text${makeSpace(5)}';
+  } else {
+    return '  $text${makeSpace(4)}';
+  }
+}
+
+String spacedTextAlignName(String text, int percent) {
+  int total = 64;
+  int spaceForText = ((total * percent) / 100).floor();
+  int spaceToAdd = ((spaceForText - text.length) / 2).floor();
+  print(spaceToAdd);
+  String space = makeSpace(spaceToAdd);
+  return '$text$space$space';
+}
+
+String spacedTextAlignRight(String text, int percent) {
+  int total = 64;
+  int spaceForText = ((total * percent) / 100).floor();
+  int spaceToAdd = ((spaceForText - text.length) / 2).floor();
+  print(spaceToAdd);
+  String space = makeSpace(spaceToAdd);
+  return '$space$space$text';
+}
+
+String makeSpaceForHeading(int t) {
+  String toReturn = '';
+  for (int i = 0; i < t - 1; i++) {
+    toReturn = toReturn + " ";
+  }
+  return toReturn;
+}
+
+String makeSpace(int t) {
+  String toReturn = '';
+  for (int i = 0; i < t; i++) {
+    toReturn = toReturn + " ";
+  }
+  return toReturn;
+}

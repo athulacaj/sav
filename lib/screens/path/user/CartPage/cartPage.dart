@@ -111,7 +111,8 @@ class _CartPageState extends State<CartPage> {
                           child: SlideAnimation(
                             verticalOffset: 100.0,
                             child: Container(
-                              padding: const EdgeInsets.all(8.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,12 +161,12 @@ class _CartPageState extends State<CartPage> {
                                     width: double.infinity,
                                   ),
                                   Spacer(),
-                                  FlatButton(
-                                    child: Text('Edit'),
+                                  TextButton(
+                                    child: Text('Edit',
+                                        style: TextStyle(color: Colors.teal)),
                                     onPressed: () {
                                       showBottomSheet(_allDetailsList[index]);
                                     },
-                                    color: Colors.tealAccent,
                                   ),
                                   Spacer(),
                                 ],

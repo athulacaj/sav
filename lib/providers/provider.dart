@@ -72,7 +72,27 @@ class IsInList extends ChangeNotifier {
       }, context);
     }
     totalQ = calculateTotalQuantity(allDetails);
+    allDetails = sort(allDetails);
     notifyListeners();
+  }
+
+  List sort(List allDetails) {
+    List tempAllDetails = [];
+    List tempAllDetailsVeg = [];
+    List tempAllDetailsFish = [];
+    List tempAllDetailsOther = [];
+    for (Map data in allDetails) {
+      if (data['shopName'] == 'Vegetables') {
+        tempAllDetailsVeg.add(data);
+      } else if (data['shopName'] == 'Dried Fish') {
+        tempAllDetailsFish.add(data);
+      } else {
+        tempAllDetailsOther.add(data);
+      }
+    }
+    tempAllDetails =
+        tempAllDetailsVeg + tempAllDetailsFish + tempAllDetailsOther;
+    return tempAllDetails;
   }
 
   void removeByName(String name) {

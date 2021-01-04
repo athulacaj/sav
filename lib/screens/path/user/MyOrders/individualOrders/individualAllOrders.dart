@@ -187,8 +187,8 @@ String timeConvertor(Timestamp time) {
   return "$day-$month-$year";
 }
 
-int totalQuantity(List details) {
-  int totalQ = 0;
+double totalQuantity(List details) {
+  double totalQ = 0;
   for (Map data in details) {
     totalQ = totalQ + data['quantity'];
   }

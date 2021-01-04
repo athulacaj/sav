@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flare_flutter/flare_actor.dart';
 import 'package:flutter/material.dart';
 import 'package:sav/screens/authPage/auth/ExtractedButton.dart';
-import 'package:sav/screens/path/user/homeScreen/homeScreen.dart';
+import 'package:sav/screens/path/user/homeScreen/home.dart';
 import 'package:sav/screens/path/user/MyOrders/MyOrders.dart';
 
 class SuccessfulPage extends StatefulWidget {

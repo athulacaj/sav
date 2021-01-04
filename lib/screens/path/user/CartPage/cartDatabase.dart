@@ -21,7 +21,7 @@ class OrderManage {
       'userData': userData,
       'uid': uid,
       'docId': '$timeInMs',
-      'time': time,
+      'time': DateTime.now(),
       'status': 'ordered',
     });
     batch.set(secondRef, {
@@ -29,7 +29,7 @@ class OrderManage {
       'userData': userData,
       'uid': uid,
       'docId': '$uid!$timeInMs',
-      'time': time,
+      'time': DateTime.now(),
       'status': 'ordered',
     });
     await batch.commit();

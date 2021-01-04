@@ -6,6 +6,7 @@ import 'package:sav/functions/quantityFormat.dart';
 import 'package:sav/screens/path/admin/functions/sendFcm.dart';
 import 'timeComparison.dart';
 import 'package:sav/screens/path/admin/print/thermalPrint.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 String _whichType = 'all';
 
@@ -49,7 +50,7 @@ class _IndividualOrdersState extends State<IndividualOrders> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xff36b58b),
-        title: Text('Individual Orders'),
+        title: Text('Individual Orders - ${widget.refNo}'),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,13 +253,50 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                                         ),
                                         SizedBox(height: 18),
                                         SizedBox(height: 18),
-                                        // Text(
-                                        //   '$_deliverySolot',
-                                        //   style: TextStyle(
-                                        //       fontSize: 16,
-                                        //       color: Colors.blue,
-                                        //       fontWeight: FontWeight.w600),
-                                        // ),
+
+                                        SizedBox(
+                                          child: Column(
+                                            children: [
+                                              Text(
+                                                '${_details[index].data()['userData']['name']}',
+                                                style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w400),
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '${_details[index].data()['userData']['phone']}',
+                                                    style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w400),
+                                                  ),
+                                                  IconButton(
+                                                    icon: Icon(Icons.phone,
+                                                        size: 30,
+                                                        color: Colors.blue),
+                                                    onPressed: () {
+                                                      launchCaller(
+                                                          _details[index]
+                                                                      .data()[
+                                                                  'userData']
+                                                              ['phone']);
+                                                    },
+                                                  )
+                                                ],
+                                              ),
+                                            ],
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                          ),
+                                          width: size.width,
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -386,14 +424,14 @@ class _IndividualOrdersState extends State<IndividualOrders> {
           ),
           GestureDetector(
             onTap: () async {
-              // Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //         builder: (BuildContext context) => ThermalPrint(
-              //               widget.allData['details'],
-              //               widget.allData,
-              //               widget.refNo,
-              //             )));
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => ThermalPrint(
+                            widget.allData['details'],
+                            widget.allData,
+                            widget.refNo,
+                          )));
             },
             child: Container(
               padding: EdgeInsets.all(8),
@@ -410,5 +448,14 @@ class _IndividualOrdersState extends State<IndividualOrders> {
         ],
       ),
     );
+  }
+}
+
+launchCaller(String phoneNo) async {
+  var _url = "tel:$phoneNo";
+  if (await canLaunch(_url)) {
+    await launch(_url);
+  } else {
+    throw 'Could not launch $_url';
   }
 }
