@@ -1,13 +1,13 @@
 // import 'dart:typed_data';
+import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:async';
-import 'package:path_provider/path_provider.dart';
 
 // import 'package:esc_pos_bluetooth/esc_pos_bluetooth.dart';
 // import 'package:esc_pos_utils/esc_pos_utils.dart';
@@ -604,7 +604,7 @@ class TestPrint {
             0,
             0);
         bluetooth.printCustom(
-            "${spacedTextForHeading('SL', 20)}${spacedTextForHeading('ITEM', 50)}${spacedTextForHeading('QTY', 30)}",
+            "${spacedTextForHeading('SL', 15)}${spacedTextForHeading('ITEM', 55)}${spacedTextForHeading('QTY', 30)}",
             1,
             0);
         bluetooth.printCustom(
@@ -613,13 +613,12 @@ class TestPrint {
             0);
         for (var i = 0; i < orderData.length; i++) {
           // bluetooth.printLeftRight(
-          //     "${spacedTextAlignSL('${(i + 1)}', 20)}${spacedTextAlignName('    ${data[i]['en']}', 50)}",
-          //     "${spacedTextAlignRight(' ${orderData[i]['quantity']} kg', 30)}",
-          //     0);
-          bluetooth.printLeftRight(
-              "${spacedTextAlignSL('${(i + 1)}', 20)}  ${data[i]['en']}",
-              "${orderData[i]['quantity']} kg",
-              1);
+          //     "${spacedTextAlignSL('${(i + 1)}', 20)}  ${data[i]['en']}",
+          //     "${orderData[i]['quantity']} kg",
+          //     1);
+          String a = "A" * 48;
+          bluetooth.printCustom(
+              format(i + 1, data[i]['en'], orderData[i]['quantity']), 1, 0);
         }
         bluetooth.printCustom(
             "--------------------------------------------------------------",
@@ -642,10 +641,79 @@ class TestPrint {
       }
     });
   }
+
+  // Bill(String pathImage) async {
+  //   var now = new DateTime.now();
+  //   var formatter = new DateFormat('dd-MM-yyyy');
+  //   Timestamp timestamp = allData['time'];
+  //   DateTime date = timestamp.toDate();
+  //   String formattedDate = formatter.format(date);
+  //   //SIZE
+  //   // 0- normal size text
+  //   // 1- only bold text
+  //   // 2- bold with medium text
+  //   // 3- bold with large text
+  //   Map userData = allData['userData'];
+  //   List orderData = allData['details'];
+  //   bluetooth.isConnected.then((isConnected) {
+  //     if (isConnected) {
+  //       bluetooth.printCustom("Smart Tuition Center - Receipt", 3, 1);
+  //       bluetooth.printNewLine();
+  //       bluetooth.printNewLine();
+  //       bluetooth.printCustom('Student : Amal Jacob', 1, 1);
+  //       bluetooth.printNewLine();
+  //       bluetooth.printLeftRight("RefNo: 1134", "Date : 15-12-2020", 1);
+  //       bluetooth.printCustom(
+  //           "--------------------------------------------------------------",
+  //           0,
+  //           0);
+  //       bluetooth.printCustom(
+  //           "${spacedTextForHeading('No', 15)}${spacedTextForHeading('Break Down', 45)}${spacedTextForHeading('Amount', 40)}",
+  //           1,
+  //           0);
+  //       bluetooth.printCustom(
+  //           "--------------------------------------------------------------",
+  //           0,
+  //           0);
+  //
+  //       String a = "A" * 48;
+  //       bluetooth.printCustom(format(1, 'Second installment', ' 6,000'), 1, 0);
+  //
+  //       bluetooth.printCustom(
+  //           "--------------------------------------------------------------",
+  //           0,
+  //           0);
+  //
+  //       // print total
+  //       bluetooth.printCustom(" Total : 6,000", 1, 1);
+  //       bluetooth.printNewLine();
+  //       bluetooth.printNewLine();
+  //       bluetooth.paperCut();
+  //     }
+  //   });
+  // }
+}
+
+String format(i, veg, qty) {
+  int total = 48;
+  String sl = '$i';
+  if (sl.length == 1) {
+    sl = "  $i";
+  }
+  if (sl.length == 2) {
+    sl = " $i";
+  }
+  String first = sl + "  " + veg;
+  String second = '$qty' + "  kg   ";
+  int count = total - first.length - second.length;
+  String space = " " * count;
+//   print();
+  String toReturn = first + space + second;
+  return toReturn;
 }
 
 String spacedTextForHeading(String text, int percent) {
-  int total = 50;
+  int total = 52;
   int spaceForText = ((total * percent) / 100).floor();
   int spaceToAdd = ((spaceForText - text.length) / 2).floor();
   print(spaceToAdd);

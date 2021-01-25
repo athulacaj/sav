@@ -1,11 +1,12 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:async';
 
 // import 'dart:typed_data';
 // import 'package:flutter/material.dart';
@@ -604,14 +605,10 @@ class TestPrint {
               0,
               0);
           for (var i = 0; i < orderData.length; i++) {
-            // bluetooth.printLeftRight(
-            // "${spacedTextAlignSL('${(i + 1) * 70}', 20)}${spacedTextAlignName('    ${orderData[i]['en']}', 50)}",
-            // "${spacedTextAlignRight(' ${orderData[i]['quantity']} kg', 30)}",
-            // 0);
-            bluetooth.printLeftRight(
-                "${spacedTextAlignSL('${(i + 1)}', 20)}  ${orderData[i]['en']}",
-                "${orderData[i]['quantity']} kg",
-                1);
+            bluetooth.printCustom(
+                format(i + 1, orderData[i]['en'], orderData[i]['quantity']),
+                1,
+                0);
           }
           bluetooth.printCustom(
               "--------------------------------------------------------------",
@@ -639,6 +636,24 @@ class TestPrint {
       }
     });
   }
+}
+
+String format(i, veg, qty) {
+  int total = 48;
+  String sl = '$i';
+  if (sl.length == 1) {
+    sl = "  $i";
+  }
+  if (sl.length == 2) {
+    sl = " $i";
+  }
+  String first = sl + "  " + veg;
+  String second = '$qty' + " kg   ";
+  int count = total - first.length - second.length;
+  String space = " " * count;
+//   print();
+  String toReturn = first + space + second;
+  return toReturn;
 }
 
 String spacedTextForHeading(String text, int percent) {
