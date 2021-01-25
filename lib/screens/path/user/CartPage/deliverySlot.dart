@@ -136,6 +136,7 @@ class _DeliverySlotState extends State<DeliverySlot> {
                         Spacer(),
                         GestureDetector(
                           onTap: () async {
+                            print('order button clicked');
                             if (selectedDate != null) {
                               _showSpinner = true;
                               setState(() {});
@@ -147,12 +148,16 @@ class _DeliverySlotState extends State<DeliverySlot> {
                                   uid: isInList.userDetails['uid'],
                                   userData: isInList.userDetails,
                                   sDate: selectedDate);
+                              print(_allDetailsList);
                               try {
                                 await oderManage.saveOrder(_allDetailsList);
+                                sendAndRetrieveMessage(
+                                    'Sav Admin',
+                                    'There is a new Order for date ${selectedDate.toString().substring(0, 10)}',
+                                    'admin');
                                 Provider.of<IsInList>(context, listen: false)
                                     .removeAllDetails();
-                                await sendAndRetrieveMessage('Sav Admin',
-                                    'There is a new Order', 'admin');
+
                                 Navigator.of(context).push(PageRouteBuilder(
                                     pageBuilder: (context, animation,
                                         secondaryAnimation) {
@@ -168,7 +173,9 @@ class _DeliverySlotState extends State<DeliverySlot> {
                                     child: child,
                                   );
                                 }));
-                              } catch (e) {}
+                              } catch (e) {
+                                print("error $e");
+                              }
 
                               _showSpinner = false;
                               setState(() {});

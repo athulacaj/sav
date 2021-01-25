@@ -10,6 +10,7 @@ class OrderManage {
   Future<void> saveOrder(List orderData) async {
     DateTime time = sDate;
     int timeInMs = time.millisecondsSinceEpoch;
+    print(time.toString().substring(0, 10));
     WriteBatch batch = FirebaseFirestore.instance.batch();
     DocumentReference firstRef = _firestore
         .collection('orders/byTime/${time.toString().substring(0, 10)}')
@@ -23,6 +24,7 @@ class OrderManage {
       'docId': '$timeInMs',
       'time': DateTime.now(),
       'status': 'ordered',
+      'deliveryDate': sDate,
     });
     batch.set(secondRef, {
       'details': orderData,
@@ -31,7 +33,12 @@ class OrderManage {
       'docId': '$uid!$timeInMs',
       'time': DateTime.now(),
       'status': 'ordered',
+      'deliveryDate': sDate,
     });
-    await batch.commit();
+    try {
+      await batch.commit();
+    } catch (e) {
+      print("error saving order in database $e");
+    }
   }
 }

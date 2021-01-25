@@ -41,6 +41,8 @@ class _IndividualOrdersState extends State<IndividualOrders> {
   void initState() {
     _whichType = 'Order';
     columWidget = [];
+    print(widget.uid);
+    print(widget.id);
     super.initState();
   }
 
@@ -131,292 +133,265 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                           ],
                         ),
                       );
-                      if (_whichType == 'Order') {
-                        print('order');
-                        if (widget.orderedTimeFrmPrvsScreen == orderedTime) {
-                          columWidget.add(toAdd);
-                        }
-                      } else if (status == _whichType) {
-                        columWidget.add(toAdd);
-                      } else if (_whichType == 'all') {
-                        print('all order');
-                        columWidget.add(toAdd);
-                      }
+                      columWidget.add(toAdd);
                     }
-                    bool _isOrderedToday =
-                        orderedTime.toDate().toString().substring(0, 10) ==
-                            DateTime.now().toString().substring(0, 10);
-                    return columWidget.length <= 0
-                        ? Container()
-                        : Container(
-                            padding: EdgeInsets.all(4),
-                            margin: EdgeInsets.symmetric(vertical: 4),
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(
-                                  width: 2,
-                                  color: status == 'ordered'
-                                      ? Colors.purple
-                                      : status == 'delivered'
-                                          ? status == 'shipped'
-                                              ? Colors.orange
-                                              : Colors.green
-                                          : status == 'canceled'
-                                              ? Colors.grey
-                                              : Colors.orange,
-                                )),
-                            child: Column(
+
+                    return Container(
+                      padding: EdgeInsets.all(4),
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(
+                            width: 2,
+                            color: status == 'ordered'
+                                ? Colors.purple
+                                : status == 'delivered'
+                                    ? status == 'shipped'
+                                        ? Colors.orange
+                                        : Colors.green
+                                    : status == 'canceled'
+                                        ? Colors.grey
+                                        : Colors.orange,
+                          )),
+                      child: Column(
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10, bottom: 4),
+                            child: Row(
                               children: <Widget>[
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: 10, bottom: 4),
-                                  child: Row(
-                                    children: <Widget>[
-                                      Expanded(
+                                Expanded(
+                                  child: Text(
+                                    'Ordered: ${timeConvertor(_nowInMS - orderedTime.millisecondsSinceEpoch, orderedTime)}',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey,
+                                        fontSize: 11),
+                                  ),
+                                ),
+                                deliveredTime != null
+                                    ? Expanded(
                                         child: Text(
-                                          'Ordered: ${timeConvertor(_nowInMS - orderedTime.millisecondsSinceEpoch, orderedTime)}',
+                                          'Delivered:${timeConvertor(_nowInMS - deliveredTime.millisecondsSinceEpoch, deliveredTime)}',
                                           style: TextStyle(
                                               fontWeight: FontWeight.w600,
                                               color: Colors.grey,
                                               fontSize: 11),
                                         ),
-                                      ),
-                                      deliveredTime != null
-                                          ? Expanded(
-                                              child: Text(
-                                                'Delivered:${timeConvertor(_nowInMS - deliveredTime.millisecondsSinceEpoch, deliveredTime)}',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.grey,
-                                                    fontSize: 11),
-                                              ),
-                                            )
-                                          : Container(),
-                                    ],
-                                  ),
-                                ),
-                                Material(
-                                  elevation: 3,
-                                  color: Colors.white,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      children: <Widget>[
-                                        SizedBox(height: 10),
-                                        Column(
-                                          children: columWidget,
-                                        ),
-                                        SizedBox(height: 6),
-                                        // deliveryFee
-                                        Row(
-                                          children: <Widget>[
-                                            Row(
-                                              children: <Widget>[
-                                                Text(
-                                                  status ?? 'nill',
-                                                  style: TextStyle(
-                                                      color: status == 'ordered'
-                                                          ? Colors.purple
-                                                          : status ==
-                                                                  'delivered'
-                                                              ? status ==
-                                                                      'shipped'
-                                                                  ? Colors
-                                                                      .orange
-                                                                  : Colors.green
-                                                              : status ==
-                                                                      'canceled'
-                                                                  ? Colors.grey
-                                                                  : Colors
-                                                                      .orange),
-                                                ),
-                                                SizedBox(width: 2),
-                                                status == 'ordered'
-                                                    ? Icon(
-                                                        Icons
-                                                            .playlist_add_check,
-                                                        color: Colors.purple)
-                                                    : status == 'canceled'
-                                                        ? Icon(
-                                                            Icons.close,
-                                                            color: Colors.grey,
-                                                          )
-                                                        : Icon(
-                                                            Icons.check,
-                                                            color: Colors.green,
-                                                          ),
-                                              ],
-                                            ),
-                                          ],
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                        ),
-                                        SizedBox(height: 18),
-                                        SizedBox(height: 18),
-
-                                        SizedBox(
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                '${_details[index].data()['userData']['name']}',
-                                                style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.w400),
-                                              ),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    '${_details[index].data()['userData']['phone']}',
-                                                    style: TextStyle(
-                                                        fontSize: 14,
-                                                        color: Colors.black,
-                                                        fontWeight:
-                                                            FontWeight.w400),
-                                                  ),
-                                                  IconButton(
-                                                    icon: Icon(Icons.phone,
-                                                        size: 30,
-                                                        color: Colors.blue),
-                                                    onPressed: () {
-                                                      launchCaller(
-                                                          _details[index]
-                                                                      .data()[
-                                                                  'userData']
-                                                              ['phone']);
-                                                    },
-                                                  )
-                                                ],
-                                              ),
-                                            ],
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                          ),
-                                          width: size.width,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                SizedBox(height: 8),
-                                SizedBox(height: 5),
-                                FlatButton(
-                                  child: Text(
-                                    status == 'delivered'
-                                        ? 'Convert to Ordered'
-                                        : status == 'canceled'
-                                            ? 'Make Ordered'
-                                            : 'Make Delivered',
-                                    style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9)),
-                                  ),
-                                  onPressed: () async {
-                                    if (status == 'ordered' ||
-                                        status == 'shipped' ||
-                                        status == 'confirmed') {
-                                      await _firestore
-                                          .collection('orders/by/${widget.uid}')
-                                          .doc(_documentId)
-                                          .update({
-                                        'status': 'delivered',
-                                        'deliveredTime': DateTime.now(),
-                                      });
-//
-                                      await _firestore
-                                          .collection(
-                                              'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
-                                          .doc(widget.bytimeId)
-                                          .update({
-                                        'status': 'delivered',
-                                        'deliveredTime': DateTime.now(),
-                                      });
-                                    }
-                                    if (status == 'delivered' ||
-                                        status == 'canceled') {
-                                      _firestore
-                                          .collection('orders/by/${widget.uid}')
-                                          .doc(_documentId)
-                                          .update({
-                                        'deliveredTime': null,
-                                        'status': 'ordered'
-                                      });
-                                      await _firestore
-                                          .collection(
-                                              'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
-                                          .doc(widget.bytimeId)
-                                          .update({
-                                        'status': 'ordered',
-                                        'deliveredTime': null,
-                                      });
-                                    }
-                                  },
-                                  color: status == 'ordered'
-                                      ? Colors.green
-                                      : status == 'canceled'
-                                          ? Colors.grey
-                                          : Color(0xff36b58b),
-                                ),
-                                FlatButton(
-                                  child: Text(
-                                    "Confirmed",
-                                    style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9)),
-                                  ),
-                                  onPressed: () async {
-                                    _firestore
-                                        .collection('orders/by/${widget.uid}')
-                                        .doc(_documentId)
-                                        .update({
-                                      'deliveredTime': null,
-                                      'status': 'confirmed'
-                                    });
-                                    await _firestore
-                                        .collection(
-                                            'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
-                                        .doc(widget.bytimeId)
-                                        .update({
-                                      'status': 'confirmed',
-                                      'deliveredTime': null,
-                                    });
-                                  },
-                                  color: status == 'canceled'
-                                      ? Colors.grey
-                                      : Color(0xff36b58b),
-                                ),
-                                FlatButton(
-                                  child: Text(
-                                    "Cancel",
-                                    style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9)),
-                                  ),
-                                  onPressed: () async {
-                                    _firestore
-                                        .collection('orders/by/${widget.uid}')
-                                        .doc(_documentId)
-                                        .update({
-                                      'deliveredTime': null,
-                                      'status': 'canceled'
-                                    });
-                                    await _firestore
-                                        .collection(
-                                            'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
-                                        .doc(widget.bytimeId)
-                                        .update({
-                                      'status': 'canceled',
-                                      'deliveredTime': null,
-                                    });
-                                  },
-                                  color: Colors.grey,
-                                ),
-                                SizedBox(height: 5),
-                                SizedBox(height: 18),
+                                      )
+                                    : Container(),
                               ],
                             ),
-                          );
+                          ),
+                          Material(
+                            elevation: 3,
+                            color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                children: <Widget>[
+                                  SizedBox(height: 10),
+                                  Column(
+                                    children: columWidget,
+                                  ),
+                                  SizedBox(height: 6),
+                                  // deliveryFee
+                                  Row(
+                                    children: <Widget>[
+                                      Row(
+                                        children: <Widget>[
+                                          Text(
+                                            status ?? 'nill',
+                                            style: TextStyle(
+                                                color: status == 'ordered'
+                                                    ? Colors.purple
+                                                    : status == 'delivered'
+                                                        ? status == 'shipped'
+                                                            ? Colors.orange
+                                                            : Colors.green
+                                                        : status == 'canceled'
+                                                            ? Colors.grey
+                                                            : Colors.orange),
+                                          ),
+                                          SizedBox(width: 2),
+                                          status == 'ordered'
+                                              ? Icon(Icons.playlist_add_check,
+                                                  color: Colors.purple)
+                                              : status == 'canceled'
+                                                  ? Icon(
+                                                      Icons.close,
+                                                      color: Colors.grey,
+                                                    )
+                                                  : Icon(
+                                                      Icons.check,
+                                                      color: Colors.green,
+                                                    ),
+                                        ],
+                                      ),
+                                    ],
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                  ),
+                                  SizedBox(height: 18),
+                                  SizedBox(height: 18),
+
+                                  SizedBox(
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          '${_details[index].data()['userData']['name']}',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w400),
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '${_details[index].data()['userData']['phone']}',
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.w400),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(Icons.phone,
+                                                  size: 30, color: Colors.blue),
+                                              onPressed: () {
+                                                launchCaller(_details[index]
+                                                        .data()['userData']
+                                                    ['phone']);
+                                              },
+                                            )
+                                          ],
+                                        ),
+                                      ],
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                    ),
+                                    width: size.width,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          SizedBox(height: 8),
+                          SizedBox(height: 5),
+                          FlatButton(
+                            child: Text(
+                              status == 'delivered'
+                                  ? 'Convert to Ordered'
+                                  : status == 'canceled'
+                                      ? 'Make Ordered'
+                                      : 'Make Delivered',
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9)),
+                            ),
+                            onPressed: () async {
+                              if (status == 'ordered' ||
+                                  status == 'shipped' ||
+                                  status == 'confirmed') {
+                                await _firestore
+                                    .collection('orders/by/${widget.uid}')
+                                    .doc(_documentId)
+                                    .update({
+                                  'status': 'delivered',
+                                  'deliveredTime': DateTime.now(),
+                                });
+//
+                                await _firestore
+                                    .collection(
+                                        'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
+                                    .doc(widget.bytimeId)
+                                    .update({
+                                  'status': 'delivered',
+                                  'deliveredTime': DateTime.now(),
+                                });
+                              }
+                              if (status == 'delivered' ||
+                                  status == 'canceled') {
+                                _firestore
+                                    .collection('orders/by/${widget.uid}')
+                                    .doc(_documentId)
+                                    .update({
+                                  'deliveredTime': null,
+                                  'status': 'ordered'
+                                });
+                                await _firestore
+                                    .collection(
+                                        'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
+                                    .doc(widget.bytimeId)
+                                    .update({
+                                  'status': 'ordered',
+                                  'deliveredTime': null,
+                                });
+                              }
+                            },
+                            color: status == 'ordered'
+                                ? Colors.green
+                                : status == 'canceled'
+                                    ? Colors.grey
+                                    : Color(0xff36b58b),
+                          ),
+                          FlatButton(
+                            child: Text(
+                              "Confirmed",
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9)),
+                            ),
+                            onPressed: () async {
+                              _firestore
+                                  .collection('orders/by/${widget.uid}')
+                                  .doc(_documentId)
+                                  .update({
+                                'deliveredTime': null,
+                                'status': 'confirmed'
+                              });
+                              await _firestore
+                                  .collection(
+                                      'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
+                                  .doc(widget.bytimeId)
+                                  .update({
+                                'status': 'confirmed',
+                                'deliveredTime': null,
+                              });
+                            },
+                            color: status == 'canceled'
+                                ? Colors.grey
+                                : Color(0xff36b58b),
+                          ),
+                          FlatButton(
+                            child: Text(
+                              "Cancel",
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9)),
+                            ),
+                            onPressed: () async {
+                              _firestore
+                                  .collection('orders/by/${widget.uid}')
+                                  .doc(_documentId)
+                                  .update({
+                                'deliveredTime': null,
+                                'status': 'canceled'
+                              });
+                              await _firestore
+                                  .collection(
+                                      'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
+                                  .doc(widget.bytimeId)
+                                  .update({
+                                'status': 'canceled',
+                                'deliveredTime': null,
+                              });
+                            },
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 5),
+                          SizedBox(height: 18),
+                        ],
+                      ),
+                    );
                   },
                 ),
               );

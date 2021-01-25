@@ -104,7 +104,7 @@ class _MyOrdersState extends State<MyOrders> {
                                           ),
                                           Spacer(),
                                           Text(
-                                              'Delivery Date: ${timeConvertor(allData['time'])}'),
+                                              'Delivery Date: ${timeConvertor(allData['deliveryDate'])}'),
                                         ],
                                       ),
                                       SizedBox(height: 15),
