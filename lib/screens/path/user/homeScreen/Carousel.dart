@@ -94,7 +94,7 @@ makeCarouousel(List imageSliders, var size) {
                   aspectRatio: 2.2,
                   enableInfiniteScroll: false,
                 ),
-                items: imageSliders,
+                items: imageSliders as List<Widget>,
               )),
         ),
       ],

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
 import 'uploadImage.dart';
 
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -16,11 +16,11 @@ class AddAds extends StatefulWidget {
 }
 
 class _AddAdsState extends State<AddAds> with SingleTickerProviderStateMixin {
-  TabController _tabController;
+  TabController? _tabController;
   bool isUploading = false;
-  UploadImage uploadImage;
-  String name, img;
-  bool _showSpinner;
+  late UploadImage uploadImage;
+  String? name, img;
+  bool? _showSpinner;
   TextEditingController _nameController = TextEditingController();
   TextEditingController _nameInEnController = TextEditingController();
   bool checkedValue = false;
@@ -71,7 +71,7 @@ class _AddAdsState extends State<AddAds> with SingleTickerProviderStateMixin {
                                     decoration: BoxDecoration(
                                         image: DecorationImage(
                                       image: FileImage(
-                                          File(uploadImage.pickedFile.path)),
+                                          File(uploadImage.pickedFile!.path)),
                                     )),
                                   ),
                                   uploadImage.progress == 1.0
@@ -121,24 +121,25 @@ class _AddAdsState extends State<AddAds> with SingleTickerProviderStateMixin {
                   ),
                 ),
                 onPressed: () async {
-                  if (_formKey.currentState.validate()) {
+                  if (_formKey.currentState!.validate()) {
                     if (img != null) {
                       print('validated');
                       _showSpinner = true;
                       setState(() {});
-                      int confirm = await showBottomSheet();
+                      int? confirm = await showBottomSheet();
                       if (confirm == 1) {
                         try {
-                          DocumentSnapshot doc = await _firestore
-                              .collection('home')
-                              .doc('ads')
-                              .get();
-                          List allInfo = [];
+                          DocumentSnapshot<Map<String, dynamic>> doc =
+                              await _firestore
+                                  .collection('home')
+                                  .doc('ads')
+                                  .get();
+                          List? allInfo = [];
                           if (doc.exists) {
-                            allInfo = doc.data()['ads'];
+                            allInfo = doc.data()!['ads'];
                           }
-                          String toAdd = img;
-                          allInfo.add(toAdd);
+                          String? toAdd = img;
+                          allInfo!.add(toAdd);
                           await _firestore
                               .collection('home')
                               .doc('ads')
@@ -174,7 +175,7 @@ class _AddAdsState extends State<AddAds> with SingleTickerProviderStateMixin {
     );
   }
 
-  Future<int> showBottomSheet() {
+  Future<int?> showBottomSheet() {
     return showModalBottomSheet<int>(
       // isScrollControlled: true,
       context: context,
@@ -205,7 +206,7 @@ class _AddAdsState extends State<AddAds> with SingleTickerProviderStateMixin {
                     children: <Widget>[
                       SizedBox(height: 15),
                       SizedBox(
-                          height: 100, width: 100, child: Image.network(img)),
+                          height: 100, width: 100, child: Image.network(img!)),
                       SizedBox(height: 40),
                       Row(
                         children: [

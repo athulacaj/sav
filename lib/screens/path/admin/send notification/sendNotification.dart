@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart';
-import 'sendFcm.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:flutter/material.dart';
+import 'package:sav/firebaseMessaging.dart';
+import 'package:sav/sendFcm.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
+import 'package:http/http.dart' as http;
 
 class SendPushNotification extends StatefulWidget {
   @override
@@ -14,12 +16,12 @@ class _SendPushNotificationState extends State<SendPushNotification> {
   bool _showSpinner = false;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _showSpinner = false;
   }
 
-  String title, body;
+  String title = '';
+  String body = '';
 
   @override
   Widget build(BuildContext context) {
@@ -66,10 +68,8 @@ class _SendPushNotificationState extends State<SendPushNotification> {
                     print('body $body');
                     _showSpinner = true;
                     setState(() {});
-                    bool result =
-                        await sendAndRetrieveMessage(title, body, 'all');
-                    print(result);
 
+                    await sendAndRetrieveMessage(title, body, 'admin');
                     await Future.delayed(Duration(seconds: 1));
                     _showSpinner = false;
                     setState(() {});

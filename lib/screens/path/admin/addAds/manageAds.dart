@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
 import 'uploadImage.dart';
 
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -17,11 +17,11 @@ class ManageAds extends StatefulWidget {
 
 class _ManageAdsState extends State<ManageAds>
     with SingleTickerProviderStateMixin {
-  TabController _tabController;
+  TabController? _tabController;
   bool isUploading = false;
-  UploadImage uploadImage;
-  String name, img;
-  bool _showSpinner;
+  late UploadImage uploadImage;
+  String? name, img;
+  bool? _showSpinner;
   TextEditingController _nameController = TextEditingController();
   TextEditingController _nameInEnController = TextEditingController();
   bool checkedValue = false;
@@ -42,7 +42,7 @@ class _ManageAdsState extends State<ManageAds>
     img = uploadImage.url;
   }
 
-  List allInfo = [];
+  List? allInfo = [];
   int selected = -1;
   @override
   Widget build(BuildContext context) {
@@ -53,14 +53,14 @@ class _ManageAdsState extends State<ManageAds>
         body: SafeArea(
           child: StreamBuilder(
             stream: _firestore.collection('home').doc('ads').snapshots(),
-            builder: (context, snapshot) {
+            builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
               if (!snapshot.hasData) {
                 return Center(
                   child: CircularProgressIndicator(),
                 );
               }
-              allInfo = snapshot.data['ads'];
-              print(allInfo.length);
+              allInfo = snapshot.data!['ads'];
+              print(allInfo!.length);
 
               print('allInfo $allInfo');
               return Column(
@@ -71,7 +71,7 @@ class _ManageAdsState extends State<ManageAds>
                   SizedBox(height: 10),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: allInfo.length,
+                      itemCount: allInfo!.length,
                       itemBuilder: (BuildContext context, int i) {
                         return GestureDetector(
                           onTap: () {
@@ -87,7 +87,7 @@ class _ManageAdsState extends State<ManageAds>
                                       : Colors.white,
                                   height: 100,
                                   width: 100,
-                                  child: Image.network(allInfo[i])),
+                                  child: Image.network(allInfo![i])),
                             ),
                           ),
                         );
@@ -107,8 +107,8 @@ class _ManageAdsState extends State<ManageAds>
                       ),
                     ),
                     onPressed: () async {
-                      if (selected != -1 && allInfo.length != 0) {
-                        List temp = allInfo;
+                      if (selected != -1 && allInfo!.length != 0) {
+                        List temp = allInfo!;
                         temp.removeAt(selected);
                         print(temp);
                         _showSpinner = true;

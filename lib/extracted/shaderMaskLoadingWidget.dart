@@ -7,9 +7,9 @@ class ShaderMaskLoading extends StatefulWidget {
 
 class _ShaderMaskLoadingState extends State<ShaderMaskLoading>
     with SingleTickerProviderStateMixin {
-  AnimationController _controller;
-  Animation<Color> animation1;
-  Animation<Color> animation2;
+  late AnimationController _controller;
+  late Animation<Color?> animation1;
+  late Animation<Color?> animation2;
   @override
   void initState() {
     _controller = AnimationController(
@@ -42,7 +42,7 @@ class _ShaderMaskLoadingState extends State<ShaderMaskLoading>
   Widget build(BuildContext context) {
     return ShaderMask(
       shaderCallback: (Rect bounds) {
-        return LinearGradient(colors: [animation1.value, animation2.value])
+        return LinearGradient(colors: [animation1.value!, animation2.value!])
             .createShader(bounds);
       },
       child: Container(

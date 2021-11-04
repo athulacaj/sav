@@ -8,13 +8,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:pin_entry_text_field/pin_entry_text_field.dart';
+
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:sav/screens/authPage/auth/ExtractedButton.dart';
 import 'package:sav/screens/path/user/homeScreen/home.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
+import 'package:sav/widgets/otpWidget.dart';
 import 'autoVerify.dart';
 import 'newUser.dart';
 import 'package:sav/firebaseMessaging.dart';
@@ -33,7 +34,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
   var _forceCodeResendToken;
-  Future<bool> loginUser(String phone, BuildContext context) async {
+  Future<void> loginUser(String phone, BuildContext context) async {
     FirebaseAuth _auth = FirebaseAuth.instance;
     _showSpinner = true;
     setState(() {});
@@ -55,7 +56,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
           };
           _showSpinner = false;
           setState(() {});
-          afterVerification(context, user.uid, user.phoneNumber);
+          afterVerification(context, user.uid, user.phoneNumber!);
         }
 
         //This callback would gets called when verification is done automaticlly
@@ -63,10 +64,10 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       verificationFailed: (exception) {
         _showSpinner = false;
         setState(() {});
-        return Fluttertoast.showToast(
+        Fluttertoast.showToast(
             msg: '${exception.code}', backgroundColor: Colors.black45);
       },
-      codeSent: (String verificationId, [int forceResendingToken]) {
+      codeSent: (String verificationId, [int? forceResendingToken]) {
         print('code send');
         _showSpinner = false;
         setState(() {});
@@ -114,14 +115,8 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                       height: 70,
                                       child: Padding(
                                         padding: const EdgeInsets.all(8.0),
-                                        child: PinEntryTextField(
-                                          fields: 6,
-                                          showFieldAsBox: true,
-                                          onSubmit: (String pin) {
-                                            //end showDialog()
-                                            _codeController.text = pin;
-                                          }, // end onSubmit
-                                        ), // end PinEntryTextField()
+                                        child: OtpWidget(
+                                            _codeController), // end PinEntryTextField()
                                       ), // end Padding()
                                     ),
                                   ],
@@ -166,18 +161,14 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                                           if (result == null) {}
                                           var user = result.user;
                                           Map _userDetails = {
-                                            'name': '${user.phoneNumber}',
+                                            'name': '${user!.phoneNumber}',
                                             'image': '',
                                             'email': '${user.phoneNumber}',
                                             'uid': user.uid
                                           };
 
-                                          if (user != null) {
-                                            afterVerification(context, user.uid,
-                                                user.phoneNumber);
-                                          } else {
-                                            print("Error");
-                                          }
+                                          afterVerification(context, user.uid,
+                                              user.phoneNumber!);
                                         } catch (e) {
                                           _showSpinner = false;
                                           setState(() {});
@@ -411,7 +402,9 @@ void afterVerification(BuildContext context, String uid, String phoneNo) async {
   // _showSpinner = false;
 
   FirebaseFirestore firestore = FirebaseFirestore.instance;
-  DocumentSnapshot snap = await firestore.collection('users').doc(uid).get();
+  DocumentSnapshot<Map<String, dynamic>> snap =
+      await firestore.collection('users').doc(uid).get();
+  FcmMain.subscribeToTopic("all");
   print('exists ${snap.exists}');
   if (!snap.exists) {
     Navigator.pushReplacement(
@@ -422,9 +415,9 @@ void afterVerification(BuildContext context, String uid, String phoneNo) async {
                   phoneNo: phoneNo,
                 )));
   } else {
-    Map userData = snap.data();
+    Map userData = snap.data()!;
     if (userData['isAdmin']) {
-      firebaseMessaging.subscribeToTopic('admin');
+      FcmMain.subscribeToTopic("admin");
     }
     Map _userDetails = {
       'phone': userData['phone'],
@@ -435,7 +428,7 @@ void afterVerification(BuildContext context, String uid, String phoneNo) async {
       'uid': userData['uid'],
       'isAdmin': userData['isAdmin'],
     };
-    Provider.of<IsInList>(context, listen: false).addUser(_userDetails);
+    Provider.of<IsInListProvider>(context, listen: false).addUser(_userDetails);
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => HomeScreen()));
   }

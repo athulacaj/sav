@@ -9,21 +9,22 @@ import 'package:sav/providers/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:keyboard_visibility/keyboard_visibility.dart';
 
-bool _showSpinner;
+bool? _showSpinner;
 bool disposing = false;
 
 class ItemsContainer extends StatefulWidget {
-  final String image;
-  final String title;
+  final String? image;
+  final String? title;
   final String en;
-  final int amount;
-  final double quantity;
-  final String unit;
-  final int index;
-  final String imageType;
-  final String shopName;
-  final bool available;
+  final int? amount;
+  final double? quantity;
+  final String? unit;
+  final int? index;
+  final String? imageType;
+  final String? shopName;
+  final bool? available;
   final bool isClosed;
+  final bool showFilterBox;
   ItemsContainer(
       {this.image,
       this.title,
@@ -33,8 +34,9 @@ class ItemsContainer extends StatefulWidget {
       this.shopName,
       this.imageType,
       this.available,
-      @required this.en,
-      @required this.isClosed,
+      required this.en,
+      required this.isClosed,
+      required this.showFilterBox,
       this.unit});
 
   @override
@@ -42,15 +44,15 @@ class ItemsContainer extends StatefulWidget {
 }
 
 class _ItemsContainerState extends State<ItemsContainer> {
-  double _quantity = 0.0;
-  int _amount = 0;
+  double? _quantity = 0.0;
+  int? _amount = 0;
   var _image;
   var _name;
   var index;
   var _unit;
-  String _shopName;
+  String? _shopName;
   List<String> _cartItemsList = [];
-  AnimationController rotationController;
+  AnimationController? rotationController;
   void _onpress;
   ScrollController _scrollController = ScrollController();
   TextEditingController _textEditingController = TextEditingController();
@@ -86,14 +88,14 @@ class _ItemsContainerState extends State<ItemsContainer> {
       'amount': _amount,
       'quantity': inputQuantity,
       'baseAmount': widget.amount,
-      'unit': _unit,
+      'unit': unit,
       'baseQuantity': widget.quantity,
       'shopName': '$_shopName',
       'imageType': widget.imageType,
     };
     if (inputQuantity > 0) {
       print('quantity $inputQuantity');
-      Provider.of<IsInList>(context, listen: false)
+      Provider.of<IsInListProvider>(context, listen: false)
           .addAllDetails(individualItem, context);
     } else {
       if (whatButton == 'add') {
@@ -103,17 +105,18 @@ class _ItemsContainerState extends State<ItemsContainer> {
           'name': '$_name',
           'image': '$_image',
           'amount': _amount,
-          'unit': _unit,
+          'unit': unit,
           'quantity': inputQuantity,
           'baseAmount': widget.amount,
           'baseQuantity': widget.quantity,
           'shopName': '$_shopName',
           'imageType': widget.imageType,
         };
-        Provider.of<IsInList>(context, listen: false)
+        Provider.of<IsInListProvider>(context, listen: false)
             .addAllDetails(individualItem, context);
       } else {
-        Provider.of<IsInList>(context, listen: false).removeByName(_name);
+        Provider.of<IsInListProvider>(context, listen: false)
+            .removeByName(_name);
       }
     }
   }
@@ -123,8 +126,8 @@ class _ItemsContainerState extends State<ItemsContainer> {
       await Future.delayed(Duration(milliseconds: 100));
       initFunctions();
 
-      var dataByName =
-          Provider.of<IsInList>(context, listen: false).getDetailsByName(_name);
+      var dataByName = Provider.of<IsInListProvider>(context, listen: false)
+          .getDetailsByName(_name);
       _amount = dataByName != null ? dataByName['amount'] : 0;
       _quantity = dataByName != null ? dataByName['quantity'] : 0.0;
     }
@@ -132,7 +135,6 @@ class _ItemsContainerState extends State<ItemsContainer> {
 
   @override
   void dispose() {
-    // TODO: implement
     _quantity = 0;
     _amount = 0;
     _image = '';
@@ -149,8 +151,8 @@ class _ItemsContainerState extends State<ItemsContainer> {
     initFunctions();
     bool _detail = false;
     var _providerDataList =
-        Provider.of<IsInList>(context, listen: true).allDetails ?? [];
-    Map providerData;
+        Provider.of<IsInListProvider>(context, listen: true).allDetails;
+    Map? providerData;
     for (var _details in _providerDataList) {
       if (_details['name'] == _name) {
         _detail = true;
@@ -168,38 +170,43 @@ class _ItemsContainerState extends State<ItemsContainer> {
         showBottomSheet();
       },
       child: Container(
-        width: MediaQuery.of(context).size.width,
+        // width: MediaQuery.of(context).size.width,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Stack(
               children: [
-                Container(
-                    width: size.width / 3 - 8.7,
-                    height: 120,
-                    child: widget.imageType != 'offline'
-                        ? CachedNetworkImage(
-                            imageUrl: '${widget.image}',
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => SpinKitThreeBounce(
-                              color: Colors.grey,
-                              size: 20.0,
-                            ),
-                          )
-                        : Image.asset(
-                            '${widget.image}',
-                            fit: BoxFit.cover,
-                          )),
+                ClipRRect(
+                  borderRadius: BorderRadius.all(Radius.circular(6)),
+                  child: Container(
+                      // width: size.width / 3 - 8.7,
+                      width: ((size.width - 10) / 3) - 8.7,
+                      height: 115,
+                      child: widget.imageType != 'offline'
+                          ? CachedNetworkImage(
+                              imageUrl: '${widget.image}',
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => SpinKitThreeBounce(
+                                color: Colors.grey,
+                                size: 20.0,
+                              ),
+                            )
+                          : Image.asset(
+                              '${widget.image}',
+                              fit: BoxFit.cover,
+                            )),
+                ),
                 Positioned(
                   bottom: 0,
                   child: Container(
                     width: size.width / 3 - 8.7,
                     height: 40,
+                    padding: EdgeInsets.symmetric(horizontal: 2),
                     child: Column(
                       children: [
                         Spacer(),
                         AutoSizeText(
-                          '${_name.split(':')[0]} ',
+                          '${_name.split(':')[0]}',
                           style: TextStyle(
                               fontWeight: FontWeight.w500,
                               fontSize: 16,
@@ -213,7 +220,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                          Colors.black12.withOpacity(0.05),
+                          Colors.black12.withOpacity(0.3),
                           Colors.black45
                         ])),
                   ),
@@ -221,14 +228,15 @@ class _ItemsContainerState extends State<ItemsContainer> {
                 _detail == true
                     ? Positioned(
                         child: Container(
-                        width: size.width / 3 - 8.7,
+                        // width: size.width / 3 - 8.7,
+                        width: ((size.width - 10) / 3) - 8.7,
                         height: 30,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
                               child: Text(
-                                '${providerData['quantity']} kg',
+                                '${providerData!['quantity']} ${providerData['unit']}',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                     fontWeight: FontWeight.w600, fontSize: 16),
@@ -249,7 +257,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
           ],
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.grey,
           border: Border.all(color: Colors.grey.withOpacity(0.3)),
           borderRadius: BorderRadius.all(Radius.circular(4)),
         ),
@@ -257,7 +265,9 @@ class _ItemsContainerState extends State<ItemsContainer> {
     );
   }
 
-  Future<List> showBottomSheet() {
+  String unit = "kg";
+  Future<List?> showBottomSheet() {
+    unit = "kg";
     return showModalBottomSheet<List>(
       isScrollControlled: true,
       context: context,
@@ -269,10 +279,30 @@ class _ItemsContainerState extends State<ItemsContainer> {
         int selectedShop = -1;
         return StatefulBuilder(builder: (context, StateSetter setState) {
           Size size = MediaQuery.of(context).size;
+          Widget dropDown = DropdownButton<String>(
+            value: unit,
+            icon: const Icon(Icons.arrow_drop_down_circle_outlined),
+            iconSize: 30,
+            elevation: 6,
+            style: const TextStyle(color: Colors.blue, fontSize: 18),
+            onChanged: (String? newValue) {
+              setState(() {
+                unit = newValue!;
+              });
+            },
+            items: <String>['kg', 'no']
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          );
+
           return SingleChildScrollView(
             child: Container(
               padding: EdgeInsets.all(8),
-              height: size.height * (3 / 4.8),
+              height: size.height - 200,
               // color: Colors.white,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -325,9 +355,11 @@ class _ItemsContainerState extends State<ItemsContainer> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
+                          padding: EdgeInsets.all(6),
                           alignment: Alignment.center,
                           child: SizedBox(
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 SizedBox(
                                   child: TextField(
@@ -346,17 +378,16 @@ class _ItemsContainerState extends State<ItemsContainer> {
                                         'Qty : ',
                                         style: TextStyle(color: Colors.black54),
                                       ),
-                                      suffix: Text(
-                                        'kg',
-                                        style: TextStyle(color: Colors.black54),
-                                      ),
                                     ),
                                   ),
                                   width: 100,
                                 ),
+                                SizedBox(width: 10),
+                                Container(
+                                    alignment: Alignment.bottomCenter,
+                                    child: dropDown)
                               ],
                             ),
-                            width: 150,
                           ),
                           height: 50,
                           width: size.width - 136,
@@ -367,10 +398,10 @@ class _ItemsContainerState extends State<ItemsContainer> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Container(
-                              child: Consumer<IsInList>(
+                              child: Consumer<IsInListProvider>(
                                   builder: (context, isInList, child) {
                                 var _detail;
-                                var _allDetails = isInList.allDetails ?? [];
+                                var _allDetails = isInList.allDetails;
                                 for (var _details in _allDetails) {
                                   if (_details['name'] == _name) {
                                     _detail = true;
@@ -403,6 +434,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
                                                 double.parse(
                                                     _textEditingController
                                                         .text));
+                                            _textEditingController.clear();
                                           },
                                           child: Container(
                                             alignment: Alignment.center,
@@ -430,10 +462,10 @@ class _ItemsContainerState extends State<ItemsContainer> {
                             ),
                             SizedBox(height: 20),
                             Container(
-                              child: Consumer<IsInList>(
+                              child: Consumer<IsInListProvider>(
                                   builder: (context, isInList, child) {
                                 var _detail;
-                                var _allDetails = isInList.allDetails ?? [];
+                                var _allDetails = isInList.allDetails;
                                 for (var _details in _allDetails) {
                                   if (_details['name'] == _name) {
                                     _detail = true;
@@ -457,9 +489,11 @@ class _ItemsContainerState extends State<ItemsContainer> {
                                       child: Material(
                                         child: InkWell(
                                           onTap: () {
-                                            Provider.of<IsInList>(context,
+                                            Provider.of<IsInListProvider>(
+                                                    context,
                                                     listen: false)
                                                 .removeByName(_name);
+                                            _textEditingController.clear();
                                             Navigator.pop(context);
                                           },
                                           child: Container(
@@ -507,133 +541,6 @@ class _ItemsContainerState extends State<ItemsContainer> {
                           ],
                         ),
                         SizedBox(height: 5),
-                        Row(
-                          children: <Widget>[
-                            SizedBox(width: 25),
-                            Spacer(),
-                            // minus and add
-                            Consumer<IsInList>(
-                              builder: (context, isInList, child) {
-                                var _detail;
-                                var _allDetails = isInList.allDetails ?? [];
-                                for (var _details in _allDetails) {
-                                  if (_details['name'] == _name) {
-                                    _detail = true;
-                                    break;
-                                  } else {
-                                    _detail = false;
-                                  }
-                                }
-                                getProviderData();
-                                return _detail == true
-                                    ? Container(
-                                        width: 110,
-                                        child: Row(children: <Widget>[
-                                          Material(
-                                            child: Container(
-                                              child: InkWell(
-                                                borderRadius:
-                                                    BorderRadius.circular(11),
-                                                child: Icon(Icons.remove,
-                                                    size: 32,
-                                                    color: Colors.white),
-                                                onTap: () {
-//
-                                                  var dataByName = Provider.of<
-                                                              IsInList>(context,
-                                                          listen: false)
-                                                      .getDetailsByName(_name);
-                                                  _amount = dataByName != null
-                                                      ? dataByName['amount']
-                                                      : 0;
-                                                  _quantity = dataByName != null
-                                                      ? dataByName['quantity']
-                                                      : 0;
-//
-                                                  if (_quantity != 0) {
-                                                    _quantity = _quantity -
-                                                        widget.quantity;
-                                                    _amount =
-                                                        _amount - widget.amount;
-
-                                                    // onPressed('null');
-                                                  }
-                                                },
-                                                splashColor: Colors.white70,
-                                              ),
-                                              height: 35,
-                                            ),
-                                            color: Color(0xff36b58b),
-                                            borderRadius: BorderRadius.only(
-                                                bottomLeft: Radius.circular(5),
-                                                topLeft: Radius.circular(5)),
-                                          ),
-                                          Spacer(),
-                                          Container(
-                                            child: AutoSizeText(
-                                              '${quantityFormat(_quantity, _unit)}',
-                                              style: TextStyle(
-                                                  color: Color(0xff36b58b),
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600),
-                                              maxLines: 1,
-                                            ),
-                                            alignment: Alignment.center,
-                                            height: 35,
-                                            width: 40,
-                                          ),
-                                          Spacer(),
-                                          Material(
-                                            color: Color(0xff36b58b),
-                                            borderRadius: BorderRadius.only(
-                                                bottomRight: Radius.circular(5),
-                                                topRight: Radius.circular(5)),
-                                            child: Container(
-                                              child: InkWell(
-                                                borderRadius:
-                                                    BorderRadius.circular(11),
-                                                child: Icon(Icons.add,
-                                                    size: 32,
-                                                    color: Colors.white),
-                                                onTap: () {
-                                                  var dataByName = Provider.of<
-                                                              IsInList>(context,
-                                                          listen: false)
-                                                      .getDetailsByName(_name);
-                                                  _amount = dataByName != null
-                                                      ? dataByName['amount']
-                                                      : 0;
-                                                  _quantity = dataByName != null
-                                                      ? dataByName['quantity']
-                                                      : 0;
-//
-                                                  _quantity = _quantity +
-                                                      widget.quantity;
-                                                  _amount =
-                                                      _amount + widget.amount;
-                                                  // onPressed('null');
-                                                  setState(() {});
-                                                },
-                                                splashColor: Colors.white70,
-                                              ),
-                                              height: 35,
-                                            ),
-                                          ),
-                                        ]),
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(6)),
-                                          border: Border.all(
-                                              width: 0.5,
-                                              color: Colors.blueGrey
-                                                  .withOpacity(0.5)),
-                                        ))
-                                    : Container();
-                              },
-                            ),
-                            // add to cart button
-                          ],
-                        )
                       ],
                     ),
                   ),

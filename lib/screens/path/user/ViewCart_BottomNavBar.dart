@@ -8,8 +8,8 @@ import 'CartPage/cartPage.dart';
 class ViewCartBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<IsInList>(builder: (context, isInList, child) {
-      var _allDetailsList = isInList.allDetails ?? [];
+    return Consumer<IsInListProvider>(builder: (context, isInList, child) {
+      var _allDetailsList = isInList.allDetails;
       double totalQ = isInList.totalQ ?? 0.0;
       return Material(
         child: InkWell(

@@ -6,10 +6,10 @@ class StarDisplayWidget extends StatelessWidget {
   final Widget unfilledStar;
 
   const StarDisplayWidget({
-    Key key,
+    Key? key,
     this.value = 0,
-    @required this.filledStar,
-    @required this.unfilledStar,
+    required this.filledStar,
+    required this.unfilledStar,
   })  : assert(value != null),
         super(key: key);
 
@@ -25,7 +25,7 @@ class StarDisplayWidget extends StatelessWidget {
 }
 
 class StarDisplay extends StarDisplayWidget {
-  const StarDisplay({Key key, int value = 0})
+  const StarDisplay({Key? key, int value = 0})
       : super(
           key: key,
           value: value,
@@ -37,12 +37,12 @@ class StarDisplay extends StarDisplayWidget {
 class StarRating extends StatelessWidget {
   final void Function(int index) onChanged;
   final int value;
-  final IconData filledStar;
-  final IconData unfilledStar;
+  final IconData? filledStar;
+  final IconData? unfilledStar;
 
   const StarRating({
-    Key key,
-    @required this.onChanged,
+    Key? key,
+    required this.onChanged,
     this.value = 0,
     this.filledStar,
     this.unfilledStar,

@@ -9,15 +9,18 @@ class UploadImage {
   UploadImage(this.callBack);
   Function callBack;
   double progress = 0.4;
-  PickedFile pickedFile;
-  File image;
-  String url;
+  XFile? pickedFile;
+  late File image;
+  String? url;
   uploadImage(String item) async {
-    pickedFile = await ImagePicker().getImage(
+    pickedFile = await ImagePicker().pickImage(
       source: ImageSource.gallery,
-      imageQuality: 20,
+      imageQuality: 80,
     );
-    image = File(pickedFile.path);
+    if (pickedFile == null) {
+      return;
+    }
+    image = File(pickedFile!.path);
     int dateInMs = DateTime.now().millisecondsSinceEpoch;
     int year = DateTime.now().year;
     firebase_storage.Reference ref =

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class EditBox extends StatelessWidget {
-  final String image;
-  final String title;
+  final String? image;
+  final String? title;
   EditBox({this.image, this.title});
   @override
   Widget build(BuildContext context) {

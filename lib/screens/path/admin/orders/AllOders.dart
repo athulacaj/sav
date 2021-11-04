@@ -1,7 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:sav/functions/duplicateOrdersFinder.dart';
+import 'package:sav/functions/showMaterialBanner.dart';
+import 'package:sav/providers/allOrdersProvider.dart';
 import 'package:sav/screens/path/admin/individualOrders/individualOrders.dart';
 import 'package:sav/screens/path/admin/individualOrders/timeComparison.dart';
 import 'package:sav/screens/path/admin/print/mutipleThermalPrint.dart';
@@ -11,12 +15,10 @@ import 'tableView.dart';
 
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
 List _orders = [];
-List<DocumentSnapshot> _allOrdersFiltered = [];
-List<DocumentSnapshot> _allOrders;
-var _whichDay;
-String _whichType = 'all';
+List<DocumentSnapshot<Map<String, dynamic>>> _allOrdersFiltered = [];
+late DateTime _whichDay;
 List whichTypeList = ['all', 'ordered', 'canceled', 'delivered'];
-List<int> selected = [];
+List<int> selectedList = [];
 bool showPrintOption = false;
 
 class AllOrders extends StatefulWidget {
@@ -24,25 +26,39 @@ class AllOrders extends StatefulWidget {
   _AllOrdersState createState() => _AllOrdersState();
 }
 
+String _whichType = 'all';
+String _whichAdmin = 'all';
+bool showDuplicateBanner = true;
+
 class _AllOrdersState extends State<AllOrders> {
   @override
   void initState() {
     showPrintOption = false;
-    selected = [];
-    _whichType = 'all';
     _whichDay = DateTime.now();
+    showDuplicateBanner = true;
     super.initState();
+    reset();
   }
+
+  void reset() {
+    _whichType = 'all';
+    _whichAdmin = 'all';
+    selectedList = [];
+    _allOrders = [];
+  }
+
+  List<DocumentSnapshot<Map<String, dynamic>>> _allOrders = [];
 
   Future<Null> _selectDate(BuildContext context) async {
     DateTime now = DateTime.now();
-    final DateTime picked = await showDatePicker(
+    final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: _whichDay,
         firstDate: DateTime(2015, 8),
         lastDate: DateTime(now.year, now.month + 1, now.day - 1));
     if (picked != null && picked != _whichDay) _whichDay = picked;
     print('date changed');
+    reset();
     setState(() {});
     callSetStateWIthDelay();
   }
@@ -58,26 +74,27 @@ class _AllOrdersState extends State<AllOrders> {
     setState(() {});
   }
 
-  List filterOrder(String whichType, List allOrders) {
-    if (whichType == 'all') {
-      return allOrders;
-    }
-    return allOrders
-        .where((value) => value.data()['status'] == whichType)
-        .toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    Map adminData = Provider.of<IsInList>(context, listen: false).userDetails;
+    Map adminData =
+        Provider.of<IsInListProvider>(context, listen: false).userDetails!;
     print(adminData['uid']);
     print('uid');
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xff36b58b),
         title: Text('All orders'),
         actions: <Widget>[
+          IconButton(
+              onPressed: () {
+                _whichDay = _whichDay.subtract(Duration(days: 1));
+                selectedList = [];
+                reset();
+                setState(() {});
+              },
+              icon: Icon(Icons.arrow_back_ios)),
           GestureDetector(
             onTap: () => _selectDate(context),
             child: Container(
@@ -90,16 +107,24 @@ class _AllOrdersState extends State<AllOrders> {
               height: double.infinity,
             ),
           ),
+          IconButton(
+              onPressed: () {
+                _whichDay = _whichDay.add(Duration(days: 1));
+                reset();
+                setState(() {});
+              },
+              icon: Icon(Icons.arrow_forward_ios)),
         ],
       ),
       body: StreamBuilder(
         stream: _firestore
             .collection(
                 'orders/byTime/${_whichDay.toString().substring(0, 10)}')
+            .orderBy("time", descending: true)
             // .where('uid', isEqualTo: adminData['uid'])
-            // .orderBy('time', descending: true)
             .snapshots(),
-        builder: (context, snapshot) {
+        builder: (context,
+            AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
           if (!snapshot.hasData) {
             return Center(
               child: CircularProgressIndicator(),
@@ -111,111 +136,189 @@ class _AllOrdersState extends State<AllOrders> {
             );
           }
           // _allOrders = snapshot.data.documents;
-          _allOrders = snapshot.data.documents.reversed.toList();
-          print(snapshot.data.documents);
-          _allOrdersFiltered = filterOrder(_whichType, _allOrders);
+          _allOrders = snapshot.data!.docs;
 
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: <Widget>[
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.only(top: 10, bottom: 20),
-                    itemCount: _allOrdersFiltered.length,
-                    itemBuilder: (context, index) {
-                      String status =
-                          _allOrdersFiltered[index].data()['status'];
-                      var orderedTime =
-                          _allOrdersFiltered[index].data()['time'];
-                      Timestamp deliveredTime =
-                          _allOrdersFiltered[index].data()['deliveredTime'] ??
+          // AllOrdersProvider.setFilteredOrdersList(_allOrders);
+          // Provider.of(context, listen: false)
+          //     .filterOrder(_whichType, _allOrders);
+          return Consumer<AllOrdersProvider>(
+            builder: (context, AllOrdersProvider allOrdersProvider, child) {
+              allOrdersProvider.filterOrder(_whichType, _allOrders, false);
+              _allOrdersFiltered = allOrdersProvider.getFilteredOrdersList();
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: <Widget>[
+                    StreamBuilder(
+                        stream: _firestore
+                            .collection('users')
+                            .where('isAdmin', isEqualTo: true)
+                            // .orderBy('time', descending: true)
+                            .snapshots(),
+                        builder: (context,
+                            AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
+                                snapshot) {
+                          if (!snapshot.hasData) {
+                            return Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          if (snapshot.hasData == false) {
+                            return Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          List adminsList = snapshot.data!.docs;
+                          AllOrdersProvider.adminsList = adminsList;
+                          return SizedBox(
+                            height: 50,
+                            child: ListView.builder(
+                              itemCount: adminsList.length,
+                              scrollDirection: Axis.horizontal,
+                              itemBuilder: (BuildContext context, int i) {
+                                return filterButton(
+                                    adminsList[i], allOrdersProvider);
+                              },
+                            ),
+                          );
+                        }),
+                    showDuplicateBanner && _whichAdmin.toLowerCase() == 'all'
+                        ? Container(
+                            width: size.width,
+                            color: Colors.orangeAccent.withOpacity(.3),
+                            margin: EdgeInsets.all(8),
+                            padding: EdgeInsets.all(8),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Duplicate Orders",
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                    IconButton(
+                                        onPressed: () {
+                                          showDuplicateBanner = false;
+                                          setState(() {});
+                                        },
+                                        icon: Icon(Icons.close)),
+                                  ],
+                                ),
+                                Divider(),
+                                Text(
+                                    DuplicateOrderFinder.find(
+                                      _allOrders,
+                                    ),
+                                    style:
+                                        TextStyle(height: 1.5, fontSize: 16)),
+                              ],
+                            ),
+                          )
+                        : Container(),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: EdgeInsets.only(top: 10, bottom: 20),
+                        itemCount: _allOrdersFiltered.length,
+                        itemBuilder: (context, index) {
+                          String? status =
+                              _allOrdersFiltered[index].data()!['status'];
+                          var orderedTime =
+                              _allOrdersFiltered[index].data()!['time'];
+                          Timestamp? deliveredTime = _allOrdersFiltered[index]
+                                  .data()!['deliveredTime'] ??
                               null;
-                      Map boyDetails =
-                          _allOrdersFiltered[index].data()['boyDetails'];
 
-                      return ExtractedAllOrdersContainer(
-                        index: index,
-                        status: status,
-                        orderedTime: orderedTime,
-                        deliveredTime: deliveredTime,
-                        totalOrders: _allOrdersFiltered.length,
-                        allData: _allOrdersFiltered[index].data(),
-                        callback: () {
-                          setState(() {});
+                          return ExtractedAllOrdersContainer(
+                            index: index,
+                            status: status,
+                            orderedTime: orderedTime,
+                            deliveredTime: deliveredTime,
+                            totalOrders: _allOrdersFiltered.length,
+                            allData: _allOrdersFiltered[index].data(),
+                            callback: () {
+                              setState(() {});
+                            },
+                          );
                         },
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                    selectedList.length >= 1
+                        ? Container(
+                            width: size.width,
+                            color: Colors.blue.withOpacity(0.75),
+                            padding: EdgeInsets.all(6),
+                            height: 60,
+                            child: Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.select_all,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    selectedList = [];
+
+                                    for (int i = 0;
+                                        i < _allOrdersFiltered.length;
+                                        i++) {
+                                      int refNo = _allOrdersFiltered.length - i;
+                                      if (_allOrdersFiltered[i]
+                                              .data()!['status'] !=
+                                          'canceled') {
+                                        selectedList.add(refNo);
+                                      }
+                                    }
+                                    setState(() {});
+                                  },
+                                ),
+                                SizedBox(width: 35),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.cancel,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    selectedList = [];
+                                    setState(() {});
+                                  },
+                                ),
+                                SizedBox(width: 35),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.print,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    List<DocumentSnapshot> itemsToPrint = [];
+                                    for (int refNo in selectedList) {
+                                      int index =
+                                          _allOrdersFiltered.length - refNo;
+                                      itemsToPrint
+                                          .add(_allOrdersFiltered[index]);
+                                    }
+                                    print(itemsToPrint.length);
+
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (BuildContext context) =>
+                                                MultipleThermalPrint(
+                                                    itemsToPrint,
+                                                    selectedList)));
+                                  },
+                                ),
+                                Text("${selectedList.length}",
+                                    style: TextStyle(color: Colors.white)),
+                                Spacer(),
+                              ],
+                            ),
+                          )
+                        : Container()
+                  ],
                 ),
-                selected.length >= 1
-                    ? Container(
-                        width: size.width,
-                        color: Colors.blue.withOpacity(0.75),
-                        padding: EdgeInsets.all(6),
-                        height: 60,
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.select_all,
-                                color: Colors.white,
-                              ),
-                              onPressed: () {
-                                selected = [];
-
-                                for (int i = 0;
-                                    i < _allOrdersFiltered.length;
-                                    i++) {
-                                  int refNo = _allOrdersFiltered.length - i;
-                                  if (_allOrdersFiltered[i].data()['status'] !=
-                                      'canceled') {
-                                    selected.add(refNo);
-                                  }
-                                }
-                                setState(() {});
-                              },
-                            ),
-                            SizedBox(width: 35),
-                            IconButton(
-                              icon: Icon(
-                                Icons.cancel,
-                                color: Colors.white,
-                              ),
-                              onPressed: () {
-                                selected = [];
-                                setState(() {});
-                              },
-                            ),
-                            SizedBox(width: 35),
-                            IconButton(
-                              icon: Icon(
-                                Icons.print,
-                                color: Colors.white,
-                              ),
-                              onPressed: () {
-                                List<DocumentSnapshot> itemsToPrint = [];
-                                for (int refNo in selected) {
-                                  int index = _allOrdersFiltered.length - refNo;
-                                  itemsToPrint.add(_allOrdersFiltered[index]);
-                                }
-                                print(_allOrdersFiltered[0].id);
-
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (BuildContext context) =>
-                                            MultipleThermalPrint(
-                                                itemsToPrint, selected)));
-                              },
-                            ),
-                            Spacer(),
-                          ],
-                        ),
-                      )
-                    : Container()
-              ],
-            ),
+              );
+            },
           );
         },
       ),
@@ -225,11 +328,39 @@ class _AllOrdersState extends State<AllOrders> {
           color: Colors.white,
         ),
         onPressed: () {
-          showTableBottomSheet(context, _allOrdersFiltered);
+          showTableBottomSheet(context, _allOrdersFiltered, _whichAdmin);
         },
       ),
     );
 //          StreamBuilder<QuerySnapshot>(
+  }
+
+  Widget filterButton(
+      DocumentSnapshot data, AllOrdersProvider allOrdersProvider) {
+    return Padding(
+      padding: const EdgeInsets.all(6.0),
+      child: Material(
+        elevation: 4,
+        child: InkWell(
+          onTap: () {
+            _whichType = data['uid'];
+            _whichAdmin = data['name'];
+            allOrdersProvider.filterOrder(_whichType, _allOrders, true);
+            selectedList = [];
+          },
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: 70),
+            child: Container(
+                color: _whichType == data['uid']
+                    ? Colors.greenAccent
+                    : Colors.white,
+                alignment: Alignment.center,
+                padding: EdgeInsets.all(6),
+                child: Text("${data['name']}")),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -238,8 +369,8 @@ int odersCountByStatus(String status, List allOrders) {
   if (status == 'all') {
     return count = allOrders.length;
   }
-  for (DocumentSnapshot orders in allOrders) {
-    String ostatus = orders.data()['status'];
+  for (DocumentSnapshot<Map<String, dynamic>> orders in allOrders) {
+    String? ostatus = orders.data()!['status'];
     if (status == ostatus) {
       count++;
     }
@@ -249,13 +380,13 @@ int odersCountByStatus(String status, List allOrders) {
 }
 
 class ExtractedAllOrdersContainer extends StatefulWidget {
-  final int index;
-  final String status;
+  final int? index;
+  final String? status;
   final orderedTime;
   final deliveredTime;
-  final int totalOrders;
-  final Map allData;
-  final Function callback;
+  final int? totalOrders;
+  final Map? allData;
+  final Function? callback;
   ExtractedAllOrdersContainer(
       {this.index,
       this.status,
@@ -275,42 +406,48 @@ class _ExtractedAllOrdersContainerState
   @override
   Widget build(BuildContext context) {
     int _nowInMS = DateTime.now().millisecondsSinceEpoch;
-    int refNo = _allOrders.length - widget.index;
+    int refNo = _allOrdersFiltered.length - widget.index!;
+    final DateFormat formatter = DateFormat();
+    DateTime orderedTime = (widget.orderedTime as Timestamp).toDate();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: GestureDetector(
         onLongPress: () {
-          if (selected.contains(refNo)) {
+          if (selectedList.contains(refNo)) {
             // selected.remove(refNo);
           } else {
-            widget.status != 'canceled' ? selected.add(refNo) : null;
+            widget.status != 'canceled' ? selectedList.add(refNo) : null;
           }
-          print('selected ${selected.contains(refNo)}');
-          widget.callback();
+          print('selected ${selectedList.contains(refNo)}');
+          widget.callback!();
           // setState(() {});
         },
         onTap: () {
-          if (selected.isNotEmpty) {
-            if (selected.contains(refNo)) {
-              selected.remove(refNo);
+          if (selectedList.isNotEmpty) {
+            if (selectedList.contains(refNo)) {
+              selectedList.remove(refNo);
             } else {
-              widget.status != 'canceled' ? selected.add(refNo) : null;
+              widget.status != 'canceled' ? selectedList.add(refNo) : null;
             }
             // setState(() {});
-            widget.callback();
+            widget.callback!();
           } else {
+            print("id is ${_allOrdersFiltered[widget.index!].id}");
+            print("id is ${_allOrdersFiltered[widget.index!]['docId']}");
             Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (context) => IndividualOrders(
                           uid:
-                              '${_allOrders[widget.index].data()['userData']['uid']}',
+                              '${_allOrdersFiltered[widget.index!].data()!['userData']['uid']}',
                           orderedTimeFrmPrvsScreen: widget.orderedTime,
-                          orderNumber: widget.totalOrders - widget.index,
-                          bytimeId: _allOrders[widget.index].id,
+                          orderNumber: widget.totalOrders! - widget.index!,
+                          bytimeId: _allOrdersFiltered[widget.index!].id,
                           allData: widget.allData,
-                          refNo: _allOrders.length - widget.index,
-                          id: _allOrders[widget.index].data()['docId'],
+                          refNo: _allOrdersFiltered.length - widget.index!,
+                          IndividualID: _allOrdersFiltered[widget.index!]
+                              ['docId'],
                         )));
           }
         },
@@ -343,13 +480,13 @@ class _ExtractedAllOrdersContainerState
                             alignment: Alignment.centerLeft,
                             height: 30,
                             child: Text(
-                              '${_allOrders.length - widget.index}',
+                              '${_allOrdersFiltered.length - widget.index!}',
                               style: TextStyle(color: Colors.white),
                             ))),
                     SizedBox(width: 6),
                     Expanded(
                         child: Text(
-                            '${_allOrders[widget.index].data()['userData']['name']} ,  ${_allOrders[widget.index].data()['userData']['shopName']}')),
+                            '${_allOrdersFiltered[widget.index!].data()!['userData']['name']} ,  ${_allOrdersFiltered[widget.index!].data()!['userData']['shopName']}')),
                     Text(widget.status ?? '',
                         style: TextStyle(
                             fontSize: 12,
@@ -370,7 +507,7 @@ class _ExtractedAllOrdersContainerState
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        'Ordered: ${timeConvertor(_nowInMS - widget.orderedTime.millisecondsSinceEpoch, widget.orderedTime) ?? ''}',
+                        'Ordered: ${formatter.format(orderedTime)}',
                         style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: Colors.grey,
@@ -380,7 +517,7 @@ class _ExtractedAllOrdersContainerState
                     widget.deliveredTime != null
                         ? Expanded(
                             child: Text(
-                              'Delivered:${timeConvertor(_nowInMS - widget.deliveredTime.millisecondsSinceEpoch, widget.deliveredTime) ?? ''}',
+                              'Delivered:${timeConvertor(_nowInMS - widget.deliveredTime.millisecondsSinceEpoch, widget.deliveredTime)}',
                               style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey,
@@ -393,7 +530,7 @@ class _ExtractedAllOrdersContainerState
               ],
             ),
             decoration: BoxDecoration(
-                color: selected.contains(refNo) == true
+                color: selectedList.contains(refNo) == true
                     ? Colors.yellow
                     : Colors.white,
                 border: Border.all(

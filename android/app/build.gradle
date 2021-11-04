@@ -30,7 +30,7 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     lintOptions {
         disable 'InvalidPackage'
     }
@@ -39,7 +39,7 @@ android {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "co.attaras.sav"
         minSdkVersion 22
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
@@ -65,6 +65,7 @@ flutter {
     source '../..'
 }
 apply plugin: 'com.android.application'
+apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 apply plugin: 'com.google.gms.google-services'
 dependencies {
     implementation 'androidx.multidex:multidex:2.0.0'

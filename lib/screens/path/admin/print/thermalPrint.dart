@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import 'formatClass.dart';
+
 // import 'package:esc_pos_bluetooth/esc_pos_bluetooth.dart';
 // import 'package:esc_pos_utils/esc_pos_utils.dart';
 // import 'package:flutter/services.dart';
@@ -343,9 +345,9 @@ import 'package:intl/intl.dart';
 // }
 
 class ThermalPrint extends StatefulWidget {
-  final List data;
-  final Map allData;
-  final int refNo;
+  final List? data;
+  final Map? allData;
+  final int? refNo;
   ThermalPrint(this.data, this.allData, this.refNo);
   @override
   _ThermalPrintState createState() => _ThermalPrintState();
@@ -355,15 +357,15 @@ class _ThermalPrintState extends State<ThermalPrint> {
   BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
 
   List<BluetoothDevice> _devices = [];
-  BluetoothDevice _device;
+  BluetoothDevice? _device;
   bool _connected = false;
-  String pathImage;
-  TestPrint testPrint;
+  String? pathImage;
+  late TestPrint testPrint;
   double total = 0;
   @override
   void initState() {
     super.initState();
-    total = totalQuantity(widget.data);
+    total = totalQuantity(widget.data!);
     print('total $total');
     initPlatformState();
     testPrint = TestPrint(
@@ -373,19 +375,19 @@ class _ThermalPrintState extends State<ThermalPrint> {
   double totalQuantity(List details) {
     double totalQ = 0;
     for (Map data in details) {
-      totalQ = totalQ + data['quantity'];
+      if (data['unit'] == 'kg') {
+        totalQ = totalQ + data['quantity'];
+      }
     }
     return totalQ;
   }
 
   Future<void> initPlatformState() async {
-    bool isConnected = await bluetooth.isConnected;
+    bool? isConnected = await bluetooth.isConnected;
     List<BluetoothDevice> devices = [];
     try {
       devices = await bluetooth.getBondedDevices();
-    } on PlatformException {
-      // TODO - Error
-    }
+    } on PlatformException {}
 
     bluetooth.onStateChanged().listen((state) {
       switch (state) {
@@ -410,7 +412,7 @@ class _ThermalPrintState extends State<ThermalPrint> {
       _devices = devices;
     });
 
-    if (isConnected) {
+    if (isConnected!) {
       setState(() {
         _connected = true;
       });
@@ -448,7 +450,8 @@ class _ThermalPrintState extends State<ThermalPrint> {
                   Expanded(
                     child: DropdownButton(
                       items: _getDeviceItems(),
-                      onChanged: (value) => setState(() => _device = value),
+                      onChanged: (dynamic value) =>
+                          setState(() => _device = value),
                       value: _device,
                     ),
                   ),
@@ -512,7 +515,7 @@ class _ThermalPrintState extends State<ThermalPrint> {
     } else {
       _devices.forEach((device) {
         items.add(DropdownMenuItem(
-          child: Text(device.name),
+          child: Text(device.name!),
           value: device,
         ));
       });
@@ -525,8 +528,8 @@ class _ThermalPrintState extends State<ThermalPrint> {
       show('No device selected.');
     } else {
       bluetooth.isConnected.then((isConnected) {
-        if (!isConnected) {
-          bluetooth.connect(_device).catchError((error) {
+        if (!isConnected!) {
+          bluetooth.connect(_device!).catchError((error) {
             setState(() => _connected = false);
           });
           setState(() => _connected = true);
@@ -567,23 +570,25 @@ class _ThermalPrintState extends State<ThermalPrint> {
 }
 
 class TestPrint {
-  final List data;
-  final Map allData;
-  final int refNo;
-  TestPrint({@required this.data, this.allData, this.refNo});
+  final List? data;
+  final Map? allData;
+  final int? refNo;
+  TestPrint({required this.data, this.allData, this.refNo});
   BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
   double totalQuantity(List details) {
     double totalQ = 0;
     for (Map data in details) {
-      totalQ = totalQ + data['quantity'];
+      if (data['unit'] == 'kg') {
+        totalQ = totalQ + data['quantity'];
+      }
     }
     return totalQ;
   }
 
-  sample(String pathImage) async {
+  sample(String? pathImage) async {
     var now = new DateTime.now();
     var formatter = new DateFormat('dd-MM-yyyy');
-    Timestamp timestamp = allData['time'];
+    Timestamp timestamp = allData!['deliveryDate'];
     DateTime date = timestamp.toDate();
     String formattedDate = formatter.format(date);
     //SIZE
@@ -591,10 +596,13 @@ class TestPrint {
     // 1- only bold text
     // 2- bold with medium text
     // 3- bold with large text
-    Map userData = allData['userData'];
-    List orderData = allData['details'];
+    String line = "_" * 24;
+
+    Map? userData = allData!['userData'];
+    List? orderData = allData!['details'];
+    int len = orderData!.length;
     bluetooth.isConnected.then((isConnected) {
-      if (isConnected) {
+      if (isConnected!) {
         bluetooth.printCustom("Sales Order", 3, 1);
         bluetooth.printNewLine();
         bluetooth.printNewLine();
@@ -611,41 +619,66 @@ class TestPrint {
             "--------------------------------------------------------------",
             0,
             0);
-        for (var i = 0; i < orderData.length; i++) {
-          // bluetooth.printLeftRight(
-          //     "${spacedTextAlignSL('${(i + 1)}', 20)}  ${data[i]['en']}",
-          //     "${orderData[i]['quantity']} kg",
-          //     1);
-          String a = "A" * 48;
-          bluetooth.printCustom(
-              format(i + 1, data[i]['en'], orderData[i]['quantity']), 1, 0);
+        bluetooth.printNewLine();
+
+        for (var i = 0; i < len; i++) {
+          // String a = "A" * 62;
+          // String a = "A" * 48;
+          // String a = "A" * 24;
+
+          Format _format = Format(
+              i + 1,
+              data![i]['en'] ?? data![i]['name'],
+              orderData[i]['quantity'].toStringAsFixed(2),
+              orderData[i]['unit']);
+          bluetooth.printCustom(_format.format(), 2, 0);
+          bluetooth.printNewLine();
         }
+        // constant items
+        Format _format = Format(len + 1, 'Chack ', '', '');
+        bluetooth.printCustom(_format.format(), 2, 0);
+        bluetooth.printNewLine();
+        _format = Format(len + 2, 'K. Box  ', '', '');
+        bluetooth.printCustom(_format.format(), 2, 0);
+        bluetooth.printNewLine();
+        _format = Format(len + 3, 'Tray ', '', '');
+        bluetooth.printCustom(_format.format(), 2, 0);
+        bluetooth.printNewLine();
+
         bluetooth.printCustom(
             "--------------------------------------------------------------",
             0,
             0);
 
-        // print total
-        bluetooth.printCustom(" Total : ${totalQuantity(data)} kg", 1, 1);
+        // // print total
+        // bluetooth.printCustom(" Total : ${totalQuantity(data!)} kg", 1, 1);
+        // bluetooth.printCustom(
+        //     "--------------------------------------------------------------",
+        //     0,
+        //     0);
+        bluetooth.printNewLine();
         bluetooth.printCustom(
-            "--------------------------------------------------------------",
-            0,
-            0);
-        bluetooth.printCustom(
-            "Shop:  ${userData['shopName']}  / ${userData['name'].toString().toUpperCase()}  ",
-            1,
+            "Shop: ${userData!['shopName']}  / ${userData['name'].toString().toUpperCase()}  ",
+            2,
             1);
+        // if (len < 8) {
+        //   for (int j = 0; j <= (8 - len); j++) {
+        //     bluetooth.printNewLine();
+        //   }
+        // }
         bluetooth.printNewLine();
         bluetooth.printNewLine();
+        String l = " -  - " * 8;
+        bluetooth.printCustom(l, 1, 0);
         bluetooth.paperCut();
       }
     });
   }
 
-  // Bill(String pathImage) async {
+  // sample(String? pathImage) async {
   //   var now = new DateTime.now();
   //   var formatter = new DateFormat('dd-MM-yyyy');
-  //   Timestamp timestamp = allData['time'];
+  //   Timestamp timestamp = allData!['time'];
   //   DateTime date = timestamp.toDate();
   //   String formattedDate = formatter.format(date);
   //   //SIZE
@@ -653,64 +686,65 @@ class TestPrint {
   //   // 1- only bold text
   //   // 2- bold with medium text
   //   // 3- bold with large text
-  //   Map userData = allData['userData'];
-  //   List orderData = allData['details'];
+
+  //   Map? userData = allData!['userData'];
+  //   List? orderData = [
+  //     {'en': "Vazuthana RED", "quantity": 20.0, "unit": "kg"},
+  //     {'en': "apple", "quantity": 20.0, "unit": "kg"},
+  //     {'en': "12345678912345", "quantity": 20.0, "unit": "kg"},
+  //     // {'en': "Yellow Bannana", "quantity": 20.125, "unit": "kg"},
+  //   ];
   //   bluetooth.isConnected.then((isConnected) {
-  //     if (isConnected) {
-  //       bluetooth.printCustom("Smart Tuition Center - Receipt", 3, 1);
-  //       bluetooth.printNewLine();
-  //       bluetooth.printNewLine();
-  //       bluetooth.printCustom('Student : Amal Jacob', 1, 1);
-  //       bluetooth.printNewLine();
-  //       bluetooth.printLeftRight("RefNo: 1134", "Date : 15-12-2020", 1);
-  //       bluetooth.printCustom(
-  //           "--------------------------------------------------------------",
-  //           0,
-  //           0);
-  //       bluetooth.printCustom(
-  //           "${spacedTextForHeading('No', 15)}${spacedTextForHeading('Break Down', 45)}${spacedTextForHeading('Amount', 40)}",
-  //           1,
-  //           0);
-  //       bluetooth.printCustom(
-  //           "--------------------------------------------------------------",
-  //           0,
-  //           0);
+  //     if (isConnected!) {
+  //       // bluetooth.printCustom(
+  //       //     "123456789123456789123456789123456789123456789", 2, 0);
+  //       for (var i = 0; i < orderData.length; i++) {
+  //         // bluetooth.printLeftRight(
+  //         //     "${spacedTextAlignSL('${(i + 1)}', 20)}  ${data[i]['en']}",
+  //         //     "${orderData[i]['quantity']} kg",
+  //         //     1);
+  //         // String a = "A" * 62;
+  //         // String a = "A" * 48;
+  //         String a = "A" * 24;
+  //         Format _format = Format(
+  //             i + 1,
+  //             orderData[i]['en'],
+  //             orderData[i]['quantity'].toStringAsFixed(2),
+  //             orderData[i]['unit']);
+  //         bluetooth.printCustom(_format.format(), 2, 0);
+  //         bluetooth.printNewLine();
+  //       }
+//
+  //       // bluetooth.printCustom(
+  //       //     "--------------------------------------------------------------",
+  //       //     0,
+  //       //     0);
   //
-  //       String a = "A" * 48;
-  //       bluetooth.printCustom(format(1, 'Second installment', ' 6,000'), 1, 0);
-  //
-  //       bluetooth.printCustom(
-  //           "--------------------------------------------------------------",
-  //           0,
-  //           0);
-  //
-  //       // print total
-  //       bluetooth.printCustom(" Total : 6,000", 1, 1);
-  //       bluetooth.printNewLine();
-  //       bluetooth.printNewLine();
+  //       // bluetooth.printNewLine();
+  //       // bluetooth.printNewLine();
   //       bluetooth.paperCut();
   //     }
   //   });
   // }
 }
 
-String format(i, veg, qty) {
-  int total = 48;
-  String sl = '$i';
-  if (sl.length == 1) {
-    sl = "  $i";
-  }
-  if (sl.length == 2) {
-    sl = " $i";
-  }
-  String first = sl + "  " + veg;
-  String second = '$qty' + "  kg   ";
-  int count = total - first.length - second.length;
-  String space = " " * count;
-//   print();
-  String toReturn = first + space + second;
-  return toReturn;
-}
+// String format(i, veg, qty, String unit) {
+//   int total = 48;
+//   String sl = '$i';
+//   if (sl.length == 1) {
+//     sl = "  $i";
+//   }
+//   if (sl.length == 2) {
+//     sl = " $i";
+//   }
+//   String first = sl + "  " + veg;
+//   String second = '$qty' + "  kg   ";
+//   int count = total - first.length - second.length;
+//   String space = " " * count;
+// //   print();
+//   String toReturn = first + space + second;
+//   return toReturn;
+// }
 
 String spacedTextForHeading(String text, int percent) {
   int total = 52;

@@ -16,14 +16,15 @@ List divideC(List a, int len, int i, int j, List result) {
     List list1 = divideC(a, len, i, ((i + j) / 2).floor(), result);
     List list2 = divideC(a, len, ((i + j) / 2).floor() + 1, j, result);
   }
+  return [];
 }
 
 void merge(List list, int leftIndex, int middleIndex, int rightIndex) {
   int leftSize = middleIndex - leftIndex + 1;
   int rightSize = rightIndex - middleIndex;
 
-  List leftList = new List(leftSize);
-  List rightList = new List(rightSize);
+  List leftList = new List.filled(leftSize, null, growable: false);
+  List rightList = new List.filled(rightSize, null, growable: false);
 
   for (int i = 0; i < leftSize; i++) leftList[i] = list[leftIndex + i];
   for (int j = 0; j < rightSize; j++) rightList[j] = list[middleIndex + j + 1];

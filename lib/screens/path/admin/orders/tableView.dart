@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-Future<List> showTableBottomSheet(
-    BuildContext context, List<DocumentSnapshot> allOrders) {
+Future<List?> showTableBottomSheet(BuildContext context,
+    List<DocumentSnapshot<Map<String, dynamic>>>? allOrders, String whichType) {
   Table table = Table(allOrders: allOrders);
+  Map vegMap = table.buildTable();
+  List vegList = vegMap['items'];
+  vegList.sort();
   return showModalBottomSheet<List>(
     isScrollControlled: true,
     context: context,
@@ -22,19 +25,30 @@ Future<List> showTableBottomSheet(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              SizedBox(height: 5),
+              SizedBox(height: 9),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(whichType),
+                ],
+              ),
+              Divider(),
+              SizedBox(height: 2),
               Expanded(
                   child: ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                itemCount: table.buildTable()['items'].length,
+                itemCount: vegList.length,
                 itemBuilder: (BuildContext context, int index) {
-                  String item = table.buildTable()['items'][index];
+                  String? itemName = vegList[index];
+                  print(table.buildTable());
+                  double qty = vegMap[itemName];
+                  String unit = vegMap["${itemName}unit"];
                   return Material(
                       elevation: 2,
                       child: Container(
                           padding: EdgeInsets.all(8),
-                          child:
-                              Text('$item : ${table.buildTable()[item]} kg')));
+                          child: Text(
+                              '$itemName : ${qty.toStringAsFixed(2)} $unit')));
                 },
               )),
               SizedBox(height: 15),
@@ -47,24 +61,41 @@ Future<List> showTableBottomSheet(
 }
 
 class Table {
-  List<DocumentSnapshot> allOrders = [];
+  List<DocumentSnapshot<Map<String, dynamic>>>? allOrders = [];
   Table({this.allOrders});
   List vegetableList = [];
   Map vegMap = {};
   Map buildTable() {
     vegetableList = [];
     vegMap = {};
-    for (DocumentSnapshot snap in allOrders) {
-      List orderItems = snap.data()['details'];
+    for (DocumentSnapshot<Map<String, dynamic>> snap in allOrders!) {
+      List orderItems = snap.data()!['details'];
+      if (snap.data()!['status'] == "canceled") {
+        continue;
+      }
+
       for (Map item in orderItems) {
 // if(vegetableList.contains(item['en'])){}else{
 //
 // }
-        if (vegMap[item['name']] != null) {
-          vegMap[item['name']] = vegMap[item['name']] + item['quantity'];
+
+        String vegName = item['name'];
+        if (item['unit'] == 'no') vegName += " ";
+
+        if (vegMap[vegName] != null) {
+          double qty = item['quantity'];
+          if (item['unit'] == 'g') {
+            qty = (qty / 1000);
+          }
+          vegMap[vegName] += qty;
         } else {
-          vegetableList.add(item['name']);
-          vegMap[item['name']] = item['quantity'];
+          double qty = item['quantity'];
+          // if (item['unit'] == 'g') {
+          //   qty = (qty / 1000);
+          // }
+          vegetableList.add(vegName);
+          vegMap[vegName] = qty;
+          vegMap["${vegName}unit"] = item['unit'];
         }
       }
     }

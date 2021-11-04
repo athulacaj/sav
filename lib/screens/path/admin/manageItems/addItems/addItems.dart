@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:sav/functions/showToastFunction.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
+import 'package:sav/widgets/uploadFiles.dart';
 import '../uploadImage.dart';
 
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -17,29 +19,26 @@ class AddItems extends StatefulWidget {
 
 class _AddItemsState extends State<AddItems>
     with SingleTickerProviderStateMixin {
-  TabController _tabController;
+  TabController? _tabController;
   bool isUploading = false;
-  UploadImage uploadImage;
-  String name, img;
-  bool _showSpinner;
+  String? name, img;
+  bool? _showSpinner;
   TextEditingController _nameController = TextEditingController();
   TextEditingController _nameInEnController = TextEditingController();
-  bool checkedValue = false;
+  bool? checkedValue = false;
   final _formKey = GlobalKey<FormState>();
+  UploadFileClass? uploadedFile;
 
   @override
   void initState() {
     _showSpinner = false;
     checkedValue = false;
     _tabController = TabController(vsync: this, length: 2);
-    uploadImage = UploadImage(callBack);
     super.initState();
   }
 
   void callBack() {
     setState(() {});
-    print(uploadImage.url);
-    img = uploadImage.url;
   }
 
   @override
@@ -55,26 +54,6 @@ class _AddItemsState extends State<AddItems>
                 height: size.height - 65,
                 child: Column(
                   children: [
-                    // TabBar(
-                    //   controller: _tabController,
-                    //   labelColor: Colors.black,
-                    //   unselectedLabelColor: Colors.grey,
-                    //   tabs: [
-                    //     Tab(
-                    //       text: '${widget.title}',
-                    //     ),
-                    //     Tab(
-                    //       text: 'Dry Fish',
-                    //     ),
-                    //   ],
-                    // ),
-                    // Expanded(
-                    //     child: TabBarView(
-                    //   controller: _tabController,
-                    //   children: [
-                    //     Container(),
-                    //   ],
-                    // )),
                     Container(
                       padding: EdgeInsets.all(15),
                       child: Form(
@@ -94,7 +73,7 @@ class _AddItemsState extends State<AddItems>
                             TextFormField(
                               keyboardType: TextInputType.text,
                               validator: (value) {
-                                if (value.isEmpty) {
+                                if (value!.isEmpty) {
                                   return 'Name cannot be null';
                                 }
                                 return null;
@@ -126,7 +105,7 @@ class _AddItemsState extends State<AddItems>
                                         name = value;
                                       },
                                       validator: (value) {
-                                        if (value.isEmpty) {
+                                        if (value!.isEmpty) {
                                           return 'Name in English cannot be null';
                                         } else {
                                           final validCharacters =
@@ -149,7 +128,7 @@ class _AddItemsState extends State<AddItems>
                                     onChanged: (newValue) {
                                       setState(() {
                                         checkedValue = newValue;
-                                        if (checkedValue) {
+                                        if (checkedValue!) {
                                           _nameInEnController.text =
                                               _nameController.text;
                                         } else {
@@ -164,7 +143,7 @@ class _AddItemsState extends State<AddItems>
                               ],
                             ),
                             SizedBox(height: 15),
-                            uploadImage.pickedFile != null
+                            uploadedFile != null
                                 ? Container(
                                     height: 80,
                                     width: 240,
@@ -175,11 +154,11 @@ class _AddItemsState extends State<AddItems>
                                           width: 240,
                                           decoration: BoxDecoration(
                                               image: DecorationImage(
-                                            image: FileImage(File(
-                                                uploadImage.pickedFile.path)),
+                                            image:
+                                                FileImage(uploadedFile!.file!),
                                           )),
                                         ),
-                                        uploadImage.progress == 1.0
+                                        uploadedFile!.progress == 1.0
                                             ? Container()
                                             : Positioned(
                                                 left: 105,
@@ -191,7 +170,8 @@ class _AddItemsState extends State<AddItems>
                                                       CircularProgressIndicator(
                                                     backgroundColor:
                                                         Colors.grey,
-                                                    value: uploadImage.progress,
+                                                    value:
+                                                        uploadedFile!.progress,
                                                   ),
                                                 ),
                                               ),
@@ -206,9 +186,17 @@ class _AddItemsState extends State<AddItems>
                                 'Upload an Image',
                                 style: TextStyle(color: Colors.white),
                               ),
-                              onPressed: () {
-                                isUploading = true;
-                                uploadImage.uploadImage('${widget.title}');
+                              onPressed: () async {
+                                _showSpinner = true;
+                                setState(() {});
+                                UploadFileClass uploadFileClass =
+                                    new UploadFileClass(
+                                        callBack, "${widget.title}", context);
+                                bool isSelected =
+                                    await uploadFileClass.uploadFile("image");
+                                if (isSelected) uploadedFile = uploadFileClass;
+                                _showSpinner = false;
+                                setState(() {});
                               },
                             ),
                           ],
@@ -228,38 +216,44 @@ class _AddItemsState extends State<AddItems>
                         ),
                       ),
                       onPressed: () async {
-                        if (_formKey.currentState.validate()) {
-                          if (img != null) {
+                        if (_formKey.currentState!.validate()) {
+                          if (uploadedFile != null &&
+                              uploadedFile!.url != null) {
                             print('validated');
                             _showSpinner = true;
                             setState(() {});
-                            int confirm = await showBottomSheet();
+                            int? confirm = await showBottomSheet();
                             if (confirm == 1) {
                               try {
-                                DocumentSnapshot doc = await _firestore
-                                    .collection('items')
-                                    .doc('${widget.title}')
-                                    .get();
-                                List allInfo = [];
+                                DocumentSnapshot<Map<String, dynamic>> doc =
+                                    await _firestore
+                                        .collection('items')
+                                        .doc('${widget.title}')
+                                        .get();
+                                List? allInfo = [];
                                 if (doc.exists) {
-                                  allInfo = doc.data()['allInfo'];
+                                  allInfo = doc.data()!['allInfo'];
                                 }
                                 Map toAdd = {
                                   'name': '$name',
                                   'en': '${_nameInEnController.text}',
                                   'search': '',
-                                  'image': '$img',
+                                  'image': '${uploadedFile!.url}',
                                   'imageType': 'online',
                                   'amount': 45,
                                   'available': true,
                                   'quantity': 500,
                                   'unit': 'g',
                                 };
-                                allInfo.add(toAdd);
-                                await _firestore
-                                    .collection('items')
-                                    .doc('${widget.title}')
-                                    .set({'allInfo': allInfo});
+                                allInfo!.add(toAdd);
+                                try {
+                                  await _firestore
+                                      .collection('items')
+                                      .doc('${widget.title}')
+                                      .set({'allInfo': allInfo});
+                                  showToast("Saved!!");
+                                } catch (e) {}
+
                                 print(allInfo);
                                 img = null;
                               } catch (e) {}
@@ -267,18 +261,7 @@ class _AddItemsState extends State<AddItems>
                             _showSpinner = false;
                             setState(() {});
                           } else {
-                            FToast().init(context);
-                            FToast().showToast(
-                              child: Container(
-                                width: size.width,
-                                alignment: Alignment.center,
-                                height: 35,
-                                child: Text('Please add a image'),
-                                color: Colors.grey.withOpacity(0.4),
-                              ),
-                              gravity: ToastGravity.CENTER,
-                              toastDuration: Duration(seconds: 2),
-                            );
+                            showToast("Please add a image!!");
                           }
                         }
                       },
@@ -294,7 +277,7 @@ class _AddItemsState extends State<AddItems>
     );
   }
 
-  Future<int> showBottomSheet() {
+  Future<int?> showBottomSheet() {
     return showModalBottomSheet<int>(
       // isScrollControlled: true,
       context: context,
@@ -329,8 +312,8 @@ class _AddItemsState extends State<AddItems>
                         style: TextStyle(fontSize: 16),
                       ),
                       SizedBox(height: 15),
-                      SizedBox(
-                          height: 100, width: 100, child: Image.network(img)),
+                      // SizedBox(
+                      //     height: 100, width: 100, child: Image.network(img!)),
                       SizedBox(height: 40),
                       Row(
                         children: [

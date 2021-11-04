@@ -1,21 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:sav/functions/showToastFunction.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
+
+import 'editDetails.dart';
 
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
 class EditItems extends StatefulWidget {
-  final List allInfo;
+  final List? allInfo;
   final String category;
-  EditItems({this.allInfo, @required this.category});
+  EditItems({this.allInfo, required this.category});
   @override
   _EditItemsState createState() => _EditItemsState();
 }
 
 class _EditItemsState extends State<EditItems> {
   List selectedItems = [];
-  List allItems = [];
-  bool _showSpinner;
+  List? allItems = [];
+  bool? _showSpinner;
   @override
   void initState() {
     _showSpinner = false;
@@ -38,11 +41,11 @@ class _EditItemsState extends State<EditItems> {
                 ? IconButton(
                     icon: Icon(Icons.select_all),
                     onPressed: () {
-                      print('${allItems.length} != ${selectedItems.length}');
-                      if (allItems.length != selectedItems.length) {
+                      print('${allItems!.length} != ${selectedItems.length}');
+                      if (allItems!.length != selectedItems.length) {
                         selectedItems = [];
 
-                        for (int i = 0; i < allItems.length; i++) {
+                        for (int i = 0; i < allItems!.length; i++) {
                           selectedItems.add(i);
                         }
                       } else {
@@ -71,7 +74,7 @@ class _EditItemsState extends State<EditItems> {
                 children: [
                   Expanded(
                     child: GridView.builder(
-                      itemCount: allItems.length,
+                      itemCount: allItems!.length,
                       itemBuilder: (BuildContext context, int i) {
                         return GestureDetector(
                           onTap: () {
@@ -84,6 +87,15 @@ class _EditItemsState extends State<EditItems> {
                               setState(() {});
 
                               print(selectedItems);
+                            } else {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => EditItemsDetails(
+                                            category: widget.category,
+                                            allInfo: widget.allInfo,
+                                            i: i,
+                                          )));
                             }
                           },
                           onLongPress: () {
@@ -101,17 +113,17 @@ class _EditItemsState extends State<EditItems> {
                                   SizedBox(
                                     child: Stack(
                                       children: [
-                                        allItems[i]['imageType'] == 'offline'
-                                            ? Image.asset(allItems[i]['image'])
+                                        allItems![i]['imageType'] == 'offline'
+                                            ? Image.asset(allItems![i]['image'])
                                             : Image.network(
-                                                allItems[i]['image']),
+                                                allItems![i]['image']),
                                         Positioned(
                                           top: 0,
                                           right: 0,
                                           // width: size.width / 3 - 20,
                                           child: Container(
                                             color: Colors.yellow,
-                                            child: allItems[i]['available']
+                                            child: allItems![i]['available']
                                                 ? Icon(
                                                     Icons.check,
                                                     color: Colors.green,
@@ -130,9 +142,9 @@ class _EditItemsState extends State<EditItems> {
                                     height: 80,
                                   ),
                                   Text(
-                                    '${allItems[i]['name']}',
+                                    '${allItems![i]['name']}',
                                     style: TextStyle(
-                                        color: allItems[i]['available']
+                                        color: allItems![i]['available']
                                             ? Colors.black
                                             : Colors.grey),
                                   ),
@@ -157,10 +169,14 @@ class _EditItemsState extends State<EditItems> {
                       onPressed: () async {
                         _showSpinner = true;
                         setState(() {});
-                        await _firestore
-                            .collection('items')
-                            .doc('${widget.category}')
-                            .set({'allInfo': allItems});
+                        try {
+                          await _firestore
+                              .collection('items')
+                              .doc('${widget.category}')
+                              .set({'allInfo': allItems});
+                          showToast("Saved!!");
+                        } catch (e) {}
+
                         _showSpinner = false;
                         setState(() {});
                       },
@@ -186,7 +202,7 @@ class _EditItemsState extends State<EditItems> {
                         ? FlatButton(
                             onPressed: () {
                               for (int index in selectedItems) {
-                                allItems.removeAt(index);
+                                allItems!.removeAt(index);
                               }
                               selectedItems = [];
                               setState(() {});
@@ -199,7 +215,7 @@ class _EditItemsState extends State<EditItems> {
                       onPressed: () {
                         print(selectedItems);
                         for (int index in selectedItems) {
-                          allItems[index]['available'] = true;
+                          allItems![index]['available'] = true;
                         }
                         selectedItems = [];
                         setState(() {});
@@ -215,7 +231,7 @@ class _EditItemsState extends State<EditItems> {
                     FlatButton(
                       onPressed: () {
                         for (int index in selectedItems) {
-                          allItems[index]['available'] = false;
+                          allItems![index]['available'] = false;
                         }
                         selectedItems = [];
                         setState(() {});

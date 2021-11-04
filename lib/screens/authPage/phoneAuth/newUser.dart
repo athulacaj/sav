@@ -1,22 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:provider/provider.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:sav/screens/authPage/auth/ExtractedButton.dart';
 import 'package:sav/screens/authPage/auth/constants.dart';
 import 'package:sav/screens/path/user/homeScreen/home.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
 
 class NewUser extends StatefulWidget {
   final String phoneNo;
-  final String uid;
-  NewUser({@required this.phoneNo, this.uid});
+  final String? uid;
+  NewUser({required this.phoneNo, this.uid});
   @override
   _NewUserState createState() => _NewUserState();
 }
 
 bool _showSpinner = false;
-int phone;
+int? phone;
 String name = '';
 String shopName = '';
 String town = '';
@@ -27,9 +27,6 @@ class _NewUserState extends State<NewUser> {
     ThemeData theme = Theme.of(context);
     return ModalProgressHUD(
       inAsyncCall: _showSpinner,
-      progressIndicator: RefreshProgressIndicator(
-        valueColor: new AlwaysStoppedAnimation<Color>(theme.primaryColorDark),
-      ),
       child: Scaffold(
         // key: _scaffoldKey,
         backgroundColor: Colors.white,
@@ -141,7 +138,7 @@ class _NewUserState extends State<NewUser> {
                       town.length > 2) {
                     await FirebaseFirestore.instance
                         .collection('users')
-                        .doc(widget.uid)
+                        .doc(widget.uid!)
                         .set({
                       'phone': widget.phoneNo,
                       'name': name,
@@ -160,7 +157,7 @@ class _NewUserState extends State<NewUser> {
                       'isAdmin': false,
                     };
                     print(_userDetails);
-                    Provider.of<IsInList>(context, listen: false)
+                    Provider.of<IsInListProvider>(context, listen: false)
                         .addUser(_userDetails);
                     Navigator.pushReplacement(context,
                         MaterialPageRoute(builder: (context) => HomeScreen()));

@@ -1,8 +1,9 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 class ExtractedBox extends StatelessWidget {
-  final String image;
-  final String title;
+  final String? image;
+  final String? title;
   ExtractedBox({this.image, this.title});
   @override
   Widget build(BuildContext context) {
@@ -29,8 +30,9 @@ class ExtractedBox extends StatelessWidget {
                     width: size.width / 2 - 18,
                     height: 30,
                     child: Center(
-                      child: Text(
+                      child: AutoSizeText(
                         '$title',
+                        maxLines: 1,
                         style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,

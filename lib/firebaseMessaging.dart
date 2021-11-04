@@ -1,93 +1,79 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'navigatorKey.dart';
 
-//final _firestore = Firestore.instance;
-String fcmToken;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-FirebaseMessaging firebaseMessaging = FirebaseMessaging();
-//void navigateToItemDetail=navigateToItemDetail()
+String? fcmToken;
 
-class FireBaseMessagingClass {
-  BuildContext homeScontext;
-  FireBaseMessagingClass(this.homeScontext);
-  void firebaseConfigure() {
-    firebaseMessaging.configure(
-      onMessage: (Map<String, dynamic> message) async {
-        FToast().init(NavKey.navKey.currentContext);
-        FToast().showToast(
-          child: Container(
-            alignment: Alignment.center,
-            height: 35,
-            child: Column(
-              children: [
-                Text(
-                  '${message['data']['title']}',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                SizedBox(height: 10),
-                Text('${message['data']['body']}'),
-              ],
-            ),
-            color: Colors.greenAccent.withOpacity(0.8),
-          ),
-          gravity: ToastGravity.CENTER,
-          toastDuration: Duration(seconds: 2),
-        );
-        print("onMessage: ${message['data']['title']}");
-      },
-      onBackgroundMessage: myBackgroundMessageHandler,
-      onLaunch: (Map<String, dynamic> message) async {
-        firebaseMessaging.onTokenRefresh;
+class FcmMain {
+  static late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  static late AndroidNotificationChannel channel;
 
-        print("onMessageLaunc: ${message['data']['page']}");
-        String _route = await message['data']['screen'];
-        print('messaging finished');
-      },
-      onResume: (Map<String, dynamic> message) async {
-        firebaseMessaging.onTokenRefresh;
-
-        print('fcm onResume');
-        String _route = await message['data']['page'];
-        print('messaging finished');
-      },
+  static void fcmMain() async {
+    channel = const AndroidNotificationChannel(
+      'high_importance_channel', // id
+      'High Importance Notifications', // title
+      'This channel is used for important notifications.', // description
+      importance: Importance.high,
     );
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+    /// Create an Android Notification Channel.
+    /// We use this channel in the `AndroidManifest.xml` file to override the
+    /// default FCM channel to enable heads up notifications.
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
+    /// Update the iOS foreground notification presentation options to allow
+    /// heads up notifications.
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    getToken();
   }
 
-  void fcmSubscribe() {
-    firebaseMessaging.subscribeToTopic('all');
+  static void subscribeToTopic(String topic) async {
+    await FirebaseMessaging.instance.subscribeToTopic(topic);
   }
 
-  Future<String> getFirebaseToken() async {
-    firebaseMessaging.subscribeToTopic('all');
-    String token = await firebaseMessaging.getToken();
-    print('tolken $token');
-    return token;
-  }
-
-  update(String token) {
+  static Future<String> getToken() async {
+    String? token = await FirebaseMessaging.instance.getToken();
     print(token);
-//    new DateTime.now()
-    fcmToken = token;
-
-//    _firestore.collection('tokens').document('$id').setData({
-//      'token': token,
-//    });
-  }
-}
-
-Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) {
-  if (message.containsKey('data')) {
-    // Handle data message
-//    final dynamic data = message['data'];
+    return token!;
   }
 
-  if (message.containsKey('notification')) {
-    // Handle notification message
-//    final dynamic notification = message['notification'];
+  static void onMessageReceived() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                  channel.id, channel.name, channel.description,
+                  //      one that already exists in example app.
+                  icon: 'ic_stat_name',
+                  color: Color(0xff36b58b)),
+            ));
+      }
+    });
   }
 
-  // Or do other work.
+  // void onMessageOpen(){
+  //   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+  //     print('A new onMessageOpenedApp event was published!');
+  //     Navigator.pushNamed(context, '/message',
+  //         arguments: MessageArguments(message, true));
+  //   });
+  // }
+
 }

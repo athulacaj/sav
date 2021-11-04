@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 class SearchProvider extends ChangeNotifier {
-  List all = [];
-  List searchResults = [];
+  List? all = [];
+  List? searchResults = [];
 
   void initSearchResults(var itemDetails) {
     all = itemDetails;

@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:sav/providers/allOrdersProvider.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
+import 'customers/viewCoustomersIndex.dart';
 import 'manageItems/addItems/addItemsIndex.dart';
-import 'manageItems/editItems/editItems.dart';
+import 'manageItems/editItems/editItemsIndex.dart';
 import 'manageItems/extracted.dart';
 import 'orders/AllOders.dart';
-import 'print/widgetToImage.dart';
-import 'print/test.dart';
 import 'package:sav/screens/path/admin/addAds/addAds.dart';
 import 'package:sav/screens/path/admin/addAds/manageAds.dart';
 import 'package:sav/screens/path/admin/send notification/sendNotification.dart';
@@ -46,92 +46,69 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               children: [
                 HomeBox(
                   icon: Icons.menu_book,
+                  width: double.infinity,
                   title: 'Orders',
-                  onclick: () {
+                  onclick: () async {
+                    _showSpinner = true;
+                    setState(() {});
+                    await AllOrdersProvider.getOnce();
+                    _showSpinner = false;
+                    setState(() {});
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) => AllOrders()));
                   },
                 ),
                 SizedBox(height: 15),
-                // FlatButton(
-                //   child: Text('print'),
-                //   onPressed: () {
-                //     Navigator.push(context,
-                //         MaterialPageRoute(builder: (context) => Print()));
-                //   },
-                //   color: Colors.blueAccent,
-                // ),
-                // SizedBox(height: 15),
-                HomeBox(
-                  icon: Icons.add,
-                  title: 'Add items',
-                  onclick: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => AddItemsIndex()));
-                  },
+                Row(
+                  children: [
+                    HomeBox(
+                      icon: Icons.add,
+                      width: (size.width / 2) - 20,
+                      title: 'Add items',
+                      onclick: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => AddItemsIndex()));
+                      },
+                    ),
+                    SizedBox(width: 16),
+                    HomeBox(
+                      icon: Icons.business,
+                      title: 'Customers',
+                      width: (size.width / 2) - 20,
+                      onclick: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ViewCustomers()));
+                      },
+                    ),
+                  ],
                 ),
-                SizedBox(height: 25),
+                SizedBox(height: 10),
                 Divider(),
                 Text('Edit Items'),
                 SizedBox(height: 15),
                 SizedBox(
                   width: size.width,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  height: size.width / 3,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
                     children: [
-                      GestureDetector(
-                        child: EditBox(
-                            image: 'assets/vegetables.jpg',
-                            title: 'Vegetables'),
-                        onTap: () async {
-                          _showSpinner = true;
-                          setState(() {});
-                          DocumentSnapshot doc = await _firestore
-                              .collection('items')
-                              .doc('vegetables')
-                              .get();
-                          List allInfo = doc.data()['allInfo'];
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (BuildContext context) => EditItems(
-                                        allInfo: allInfo,
-                                        category: 'vegetables',
-                                      )));
-                          _showSpinner = false;
-                          setState(() {});
-                        },
-                      ),
-                      GestureDetector(
-                        child: EditBox(
-                            image: 'assets/unakameen.jpg', title: 'Dry Fish '),
-                        onTap: () async {
-                          _showSpinner = true;
-                          setState(() {});
-                          DocumentSnapshot doc = await _firestore
-                              .collection('items')
-                              .doc('driedFish')
-                              .get();
-                          List allInfo = doc.data()['allInfo'];
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (BuildContext context) => EditItems(
-                                        allInfo: allInfo,
-                                        category: 'driedFish',
-                                      )));
-                          _showSpinner = false;
-                          setState(() {});
-                        },
-                      ),
+                      editItemBox("vegetables.jpg", "Vegetables", "vegetables"),
+                      SizedBox(width: 13),
+                      editItemBox("unakameen.jpg", "Dry Fish", "driedFish"),
+                      SizedBox(width: 13),
+                      editItemBox("fruits.jpg", "Fruits", "fruits"),
+                      SizedBox(width: 13),
+                      editItemBox("other.png", "Other Items", "others"),
+                      SizedBox(width: 13),
                     ],
                   ),
                 ),
                 SizedBox(height: 15),
                 Divider(),
-
                 Row(
                   children: [
                     FlatButton(
@@ -164,7 +141,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   ],
                 ),
                 SizedBox(height: 15),
-
                 FlatButton(
                   color: Colors.lightBlue,
                   child: Text(
@@ -186,20 +162,43 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       ),
     );
   }
+
+  Widget editItemBox(String image, String title, String docId) {
+    return GestureDetector(
+      child: EditBox(image: 'assets/$image', title: '$title'),
+      onTap: () async {
+        _showSpinner = true;
+        setState(() {});
+        DocumentSnapshot<Map> doc =
+            await _firestore.collection('items').doc('$docId').get();
+        List? allInfo = doc.data()!['allInfo'];
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (BuildContext context) => EditItems(
+                      allInfo: allInfo,
+                      category: '$docId',
+                    )));
+        _showSpinner = false;
+        setState(() {});
+      },
+    );
+  }
 }
 
 class HomeBox extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final Function onclick;
-  HomeBox({this.icon, this.title, this.onclick});
+  final IconData? icon;
+  final String? title;
+  final Function? onclick;
+  final double width;
+  HomeBox({this.icon, this.title, this.onclick, required this.width});
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 100,
-      width: double.infinity,
+      width: width,
       child: InkWell(
-        onTap: onclick,
+        onTap: onclick as void Function()?,
         child: Material(
           elevation: 4,
           color: Colors.white,

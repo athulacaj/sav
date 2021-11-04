@@ -9,9 +9,9 @@ class AddItemsIndex extends StatefulWidget {
 
 class _AddItemsIndexState extends State<AddItemsIndex>
     with SingleTickerProviderStateMixin {
-  TabController _tabController;
+  TabController? _tabController;
   void initState() {
-    _tabController = TabController(vsync: this, length: 2);
+    _tabController = TabController(vsync: this, length: 4);
     super.initState();
   }
 
@@ -32,6 +32,12 @@ class _AddItemsIndexState extends State<AddItemsIndex>
                 Tab(
                   text: 'Dry Fish',
                 ),
+                Tab(
+                  text: 'Fruits',
+                ),
+                Tab(
+                  text: 'Others',
+                ),
               ],
             ),
             Expanded(
@@ -40,6 +46,8 @@ class _AddItemsIndexState extends State<AddItemsIndex>
               children: [
                 AddItems('vegetables'),
                 AddItems('driedFish'),
+                AddItems('fruits'),
+                AddItems('others'),
               ],
             )),
           ],

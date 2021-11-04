@@ -1,4 +1,5 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,9 +14,9 @@ bool _showSPinner = false;
 class MyDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<IsInList>(builder: (context, isInList, child) {
-      Map _userDetails = isInList.userDetails;
-      _showSPinner = isInList.showSpinner ?? false;
+    return Consumer<IsInListProvider>(builder: (context, isInList, child) {
+      Map? _userDetails = isInList.userDetails;
+      _showSPinner = isInList.showSpinner;
       return SafeArea(
         child: Drawer(
           child: SizedBox(
@@ -115,10 +116,11 @@ class MyDrawer extends StatelessWidget {
                               child: GestureDetector(
                                 onTap: () async {
                                   // await _auth.signOut();
-                                  Provider.of<IsInList>(context, listen: false)
+                                  Provider.of<IsInListProvider>(context,
+                                          listen: false)
                                       .addUser(null);
                                   try {
-                                    firebaseMessaging
+                                    FirebaseMessaging.instance
                                         .unsubscribeFromTopic('admin');
                                   } catch (e) {}
                                 },

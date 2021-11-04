@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-void saveUserData(Map userData) async {
+void saveUserData(Map? userData) async {
   final localData = await SharedPreferences.getInstance();
 
   String user = jsonEncode(userData);
@@ -13,20 +15,20 @@ void saveUserData(Map userData) async {
 double calculateTotalQuantity(var allDetails) {
   double totalQ = 0;
   for (var _alldetail in allDetails) {
-    totalQ = totalQ + _alldetail['quantity'] ?? 0.0;
+    totalQ = totalQ + _alldetail['quantity'];
   }
   return totalQ;
 }
 
-class IsInList extends ChangeNotifier {
+class IsInListProvider extends ChangeNotifier {
 //  bool isInList = false;
   List allDetails = []; //cart items
   int indianHour = 24;
-  double totalQ;
-  Map userDetails;
-  String userName;
+  double? totalQ;
+  Map? userDetails;
+  String? userName;
   bool showSpinner = false;
-  String fcmId;
+  String? fcmId;
   setFcmId(String id) {
     fcmId = id;
     notifyListeners();
@@ -38,7 +40,7 @@ class IsInList extends ChangeNotifier {
   }
 
   // adding user information when login
-  void addUser(Map user) async {
+  void addUser(Map? user) async {
     userDetails = user;
     saveUserData(user);
     notifyListeners();
@@ -95,7 +97,7 @@ class IsInList extends ChangeNotifier {
     return tempAllDetails;
   }
 
-  void removeByName(String name) {
+  void removeByName(String? name) {
     for (int i = 0; i < allDetails.length; i++) {
       if (allDetails[i]['name'] == name) {
         allDetails.removeAt(i);
@@ -105,7 +107,7 @@ class IsInList extends ChangeNotifier {
     notifyListeners();
   }
 
-  getDetailsByName(String name) {
+  getDetailsByName(String? name) {
     var toReturn;
     for (int i = 0; i < allDetails.length; i++) {
       if (allDetails[i]['name'] == name) {
@@ -119,7 +121,17 @@ class IsInList extends ChangeNotifier {
 
   void removeAllDetails() {
     allDetails = [];
+    isReOrder = false;
     totalQ = calculateTotalQuantity(allDetails);
+    notifyListeners();
+  }
+
+  // applicable for only admins reordering from cart
+  bool isReOrder = false;
+  void fromOrdersToCart(List ordersItemList) {
+    allDetails = ordersItemList;
+    totalQ = calculateTotalQuantity(allDetails);
+    this.isReOrder = true;
     notifyListeners();
   }
 }
@@ -136,9 +148,9 @@ void checkSameShop(Map newDetails, List allDetails, Function addDetails,
   bool isAlreadyAddedCategoryIsFood = true;
   // isFoodCategory is the new added item is food or not
 
-  String newShopName = newDetails['shopName'];
-  String newCategory = newDetails['category'];
-  String addedShopName;
+  String? newShopName = newDetails['shopName'];
+  String? newCategory = newDetails['category'];
+  String? addedShopName;
   print(newCategory);
   // check the product category is same
   if (newCategory != 'food') {
@@ -147,7 +159,7 @@ void checkSameShop(Map newDetails, List allDetails, Function addDetails,
 
   for (int i = 0; i < allDetails.length; i++) {
     addedShopName = allDetails[i]['shopName'];
-    String addedCategory = allDetails[i]['category'];
+    String? addedCategory = allDetails[i]['category'];
     if (addedCategory != 'food') {
       isAlreadyAddedCategoryIsFood = false;
       break;
@@ -175,7 +187,8 @@ void checkSameShop(Map newDetails, List allDetails, Function addDetails,
     if (isSameShop) {
       addDetails();
     } else {
-      String type = await showBottomSheet(context, addedShopName, newShopName);
+      String? type = await (showBottomSheet(context, addedShopName, newShopName)
+          as FutureOr<String?>);
       if (type == 'remove') {
         deleteItems();
         addDetails();
@@ -183,7 +196,8 @@ void checkSameShop(Map newDetails, List allDetails, Function addDetails,
     }
   } else {
     //  food cannot order wit other items
-    String type = await showBottomSheet(context, addedShopName, newShopName);
+    String? type = await (showBottomSheet(context, addedShopName, newShopName)
+        as FutureOr<String?>);
 
     if (type == 'remove') {
       deleteItems();
@@ -193,7 +207,7 @@ void checkSameShop(Map newDetails, List allDetails, Function addDetails,
 }
 
 Future showBottomSheet(
-    BuildContext context, String oldShopName, String newShopName) {
+    BuildContext context, String? oldShopName, String? newShopName) {
   return showModalBottomSheet<void>(
     context: context,
     builder: (BuildContext context) {

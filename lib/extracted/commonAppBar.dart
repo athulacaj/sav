@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CommonAppbar extends StatelessWidget {
-  final String title;
-  final String whichScreen;
+  final String? title;
+  final String? whichScreen;
   CommonAppbar({this.title, this.whichScreen});
   @override
   Widget build(BuildContext context) {

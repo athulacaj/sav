@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import 'formatClass.dart';
+
 // import 'dart:typed_data';
 // import 'package:flutter/material.dart';
 // import 'package:esc_pos_bluetooth/esc_pos_bluetooth.dart';
@@ -354,10 +356,10 @@ class _MultipleThermalPrintState extends State<MultipleThermalPrint> {
   BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
 
   List<BluetoothDevice> _devices = [];
-  BluetoothDevice _device;
+  BluetoothDevice? _device;
   bool _connected = false;
-  String pathImage;
-  TestPrint testPrint;
+  String? pathImage;
+  late TestPrint testPrint;
   @override
   void initState() {
     super.initState();
@@ -368,19 +370,19 @@ class _MultipleThermalPrintState extends State<MultipleThermalPrint> {
   double totalQuantity(List details) {
     double totalQ = 0;
     for (Map data in details) {
-      totalQ = totalQ + data['quantity'];
+      if (data['unit'] == 'kg') {
+        totalQ = totalQ + data['quantity'];
+      }
     }
     return totalQ;
   }
 
   Future<void> initPlatformState() async {
-    bool isConnected = await bluetooth.isConnected;
+    bool? isConnected = await bluetooth.isConnected;
     List<BluetoothDevice> devices = [];
     try {
       devices = await bluetooth.getBondedDevices();
-    } on PlatformException {
-      // TODO - Error
-    }
+    } on PlatformException {}
 
     bluetooth.onStateChanged().listen((state) {
       switch (state) {
@@ -405,7 +407,7 @@ class _MultipleThermalPrintState extends State<MultipleThermalPrint> {
       _devices = devices;
     });
 
-    if (isConnected) {
+    if (isConnected!) {
       setState(() {
         _connected = true;
       });
@@ -443,7 +445,8 @@ class _MultipleThermalPrintState extends State<MultipleThermalPrint> {
                   Expanded(
                     child: DropdownButton(
                       items: _getDeviceItems(),
-                      onChanged: (value) => setState(() => _device = value),
+                      onChanged: (dynamic value) =>
+                          setState(() => _device = value),
                       value: _device,
                     ),
                   ),
@@ -507,7 +510,7 @@ class _MultipleThermalPrintState extends State<MultipleThermalPrint> {
     } else {
       _devices.forEach((device) {
         items.add(DropdownMenuItem(
-          child: Text(device.name),
+          child: Text(device.name!),
           value: device,
         ));
       });
@@ -520,8 +523,8 @@ class _MultipleThermalPrintState extends State<MultipleThermalPrint> {
       show('No device selected.');
     } else {
       bluetooth.isConnected.then((isConnected) {
-        if (!isConnected) {
-          bluetooth.connect(_device).catchError((error) {
+        if (!isConnected!) {
+          bluetooth.connect(_device!).catchError((error) {
             setState(() => _connected = false);
           });
           setState(() => _connected = true);
@@ -563,27 +566,30 @@ class _MultipleThermalPrintState extends State<MultipleThermalPrint> {
 
 class TestPrint {
   final List allData;
-  final List refNoList;
-  TestPrint({@required this.allData, this.refNoList});
+  final List? refNoList;
+  TestPrint({required this.allData, this.refNoList});
   BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
   double totalQuantity(List details) {
     double totalQ = 0;
     for (Map data in details) {
+      if (data['unit'] != 'kg') {
+        continue;
+      }
       totalQ = totalQ + data['quantity'];
     }
     return totalQ;
   }
 
-  sample(String pathImage) async {
+  sample(String? pathImage) async {
     bluetooth.isConnected.then((isConnected) {
-      if (isConnected) {
+      if (isConnected!) {
         int i = 0;
-        for (DocumentSnapshot snap in allData) {
-          int refNo = refNoList[i];
-          Map userData = snap.data()['userData'];
-          List orderData = snap.data()['details'];
-
-          Timestamp timestamp = snap.data()['time'];
+        for (DocumentSnapshot<Map<String, dynamic>> snap in allData) {
+          int refNo = refNoList![i];
+          Map userData = snap.data()!['userData'];
+          List orderData = snap.data()!['details'];
+          int len = orderData.length;
+          Timestamp timestamp = snap.data()!['deliveryDate'];
           DateTime date = timestamp.toDate();
           var now = new DateTime.now();
           var formatter = new DateFormat('dd-MM-yyyy');
@@ -604,31 +610,52 @@ class TestPrint {
               "--------------------------------------------------------------",
               0,
               0);
+          bluetooth.printNewLine();
           for (var i = 0; i < orderData.length; i++) {
-            bluetooth.printCustom(
-                format(i + 1, orderData[i]['en'], orderData[i]['quantity']),
-                1,
-                0);
+            // bluetooth.printCustom(
+            //     format(i + 1, orderData[i]['en'], orderData[i]['quantity'],
+            //         orderData[i]['unit']),
+            //     1,
+            //     0);
+
+            Format _format = Format(
+                i + 1,
+                orderData[i]['en'] ?? orderData[i]['name'],
+                orderData[i]['quantity'].toStringAsFixed(2),
+                orderData[i]['unit']);
+            bluetooth.printCustom(_format.format(), 2, 0);
+            bluetooth.printNewLine();
           }
+          // constant items
+          Format _format = Format(len + 1, 'Chack ', '', '');
+          bluetooth.printCustom(_format.format(), 2, 0);
+          bluetooth.printNewLine();
+          _format = Format(len + 2, 'K. Box  ', '', '');
+          bluetooth.printCustom(_format.format(), 2, 0);
+          bluetooth.printNewLine();
+          _format = Format(len + 3, 'Tray ', '', '');
+          bluetooth.printCustom(_format.format(), 2, 0);
+          bluetooth.printNewLine();
+
           bluetooth.printCustom(
               "--------------------------------------------------------------",
               0,
               0);
 
-          // print total
+          bluetooth.printNewLine();
           bluetooth.printCustom(
-              " Total : ${totalQuantity(orderData)} kg", 1, 1);
-          bluetooth.printCustom(
-              "--------------------------------------------------------------",
-              0,
-              0);
-
-          bluetooth.printCustom(
-              "Shop:  ${userData['shopName']}  / ${userData['name'].toString().toUpperCase()}  ",
-              1,
+              "Shop: ${userData['shopName']}  / ${userData['name'].toString().toUpperCase()}  ",
+              2,
               1);
+          if (len < 9) {
+            for (int j = 0; j <= (9 - len); j++) {
+              bluetooth.printNewLine();
+            }
+          }
           bluetooth.printNewLine();
           bluetooth.printNewLine();
+          String l = " -  - " * 8;
+          bluetooth.printCustom(l, 1, 0);
           bluetooth.paperCut();
 
           i++;
@@ -638,7 +665,7 @@ class TestPrint {
   }
 }
 
-String format(i, veg, qty) {
+String format(i, veg, qty, String unit) {
   int total = 48;
   String sl = '$i';
   if (sl.length == 1) {
@@ -648,7 +675,7 @@ String format(i, veg, qty) {
     sl = " $i";
   }
   String first = sl + "  " + veg;
-  String second = '$qty' + " kg   ";
+  String second = '$qty' + " $unit   ";
   int count = total - first.length - second.length;
   String space = " " * count;
 //   print();

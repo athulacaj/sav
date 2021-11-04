@@ -6,8 +6,8 @@ import 'package:sav/screens/path/user/CartPage/cartPage.dart';
 class CartBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<IsInList>(builder: (context, isInList, child) {
-      var _allDetailsList = isInList.allDetails ?? [];
+    return Consumer<IsInListProvider>(builder: (context, isInList, child) {
+      var _allDetailsList = isInList.allDetails;
 
       return IconButton(
         onPressed: () {
@@ -86,7 +86,7 @@ createCartAnimation(var _allDetailsList) {
     duration: Duration(milliseconds: 400),
     tween: Tween<double>(begin: -10, end: 0),
     curve: Curves.easeInOutBack,
-    builder: (BuildContext context, double value, Widget child) {
+    builder: (BuildContext context, double value, Widget? child) {
       return Positioned(
         right: 3,
         top: value,

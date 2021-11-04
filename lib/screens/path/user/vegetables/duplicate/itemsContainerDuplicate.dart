@@ -8,19 +8,19 @@ import 'package:sav/functions/quantityFormat.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-bool _showSpinner;
+bool? _showSpinner;
 bool disposing = false;
 
 class ItemsContainer extends StatefulWidget {
-  final String image;
-  final String title;
+  final String? image;
+  final String? title;
   final amount;
-  final int quantity;
-  final String unit;
-  final int index;
-  final String imageType;
-  final String shopName;
-  final bool available;
+  final int? quantity;
+  final String? unit;
+  final int? index;
+  final String? imageType;
+  final String? shopName;
+  final bool? available;
   final bool isClosed;
   ItemsContainer(
       {this.image,
@@ -31,7 +31,7 @@ class ItemsContainer extends StatefulWidget {
       this.shopName,
       this.imageType,
       this.available,
-      @required this.isClosed,
+      required this.isClosed,
       this.unit});
 
   @override
@@ -39,15 +39,15 @@ class ItemsContainer extends StatefulWidget {
 }
 
 class _ItemsContainerState extends State<ItemsContainer> {
-  var _quantity = 0;
-  var _amount = 0;
+  int? _quantity = 0;
+  int? _amount = 0;
   var _image;
   var _name;
   var index;
   var _unit;
-  String _shopName;
+  String? _shopName;
   List<String> _cartItemsList = [];
-  AnimationController rotationController;
+  AnimationController? rotationController;
   void _onpress;
 
   @override
@@ -81,9 +81,9 @@ class _ItemsContainerState extends State<ItemsContainer> {
       'shopName': '$_shopName',
       'imageType': widget.imageType,
     };
-    if (_quantity > 0) {
+    if (_quantity! > 0) {
       print('quantity $_quantity');
-      Provider.of<IsInList>(context, listen: false)
+      Provider.of<IsInListProvider>(context, listen: false)
           .addAllDetails(individualItem, context);
     } else {
       if (whatButton == 'add') {
@@ -100,10 +100,10 @@ class _ItemsContainerState extends State<ItemsContainer> {
           'shopName': '$_shopName',
           'imageType': widget.imageType,
         };
-        Provider.of<IsInList>(context, listen: false)
+        Provider.of<IsInListProvider>(context, listen: false)
             .addAllDetails(individualItem, context);
       } else {
-        Provider.of<IsInList>(context, listen: false).removeByName(_name);
+        Provider.of<IsInListProvider>(context, listen: false).removeByName(_name);
       }
     }
   }
@@ -114,7 +114,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
       initFunctions();
 
       var dataByName =
-          Provider.of<IsInList>(context, listen: false).getDetailsByName(_name);
+          Provider.of<IsInListProvider>(context, listen: false).getDetailsByName(_name);
       _amount = dataByName != null ? dataByName['amount'] : 0;
       _quantity = dataByName != null ? dataByName['quantity'] : 0;
     }
@@ -122,7 +122,6 @@ class _ItemsContainerState extends State<ItemsContainer> {
 
   @override
   void dispose() {
-    // TODO: implement
     _quantity = 0;
     _amount = 0;
     _image = '';
@@ -213,10 +212,10 @@ class _ItemsContainerState extends State<ItemsContainer> {
                             ),
                             Spacer(),
                             // minus and add
-                            Consumer<IsInList>(
+                            Consumer<IsInListProvider>(
                               builder: (context, isInList, child) {
                                 var _detail;
-                                var _allDetails = isInList.allDetails ?? [];
+                                var _allDetails = isInList.allDetails;
                                 for (var _details in _allDetails) {
                                   if (_details['name'] == _name) {
                                     _detail = true;
@@ -241,7 +240,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
                                                 onTap: () {
 //
                                                   var dataByName = Provider.of<
-                                                              IsInList>(context,
+                                                              IsInListProvider>(context,
                                                           listen: false)
                                                       .getDetailsByName(_name);
                                                   _amount = dataByName != null
@@ -252,10 +251,10 @@ class _ItemsContainerState extends State<ItemsContainer> {
                                                       : 0;
 //
                                                   if (_quantity != 0) {
-                                                    _quantity = _quantity -
-                                                        widget.quantity;
-                                                    _amount =
-                                                        _amount - widget.amount;
+                                                    _quantity = _quantity! -
+                                                        widget.quantity!;
+                                                    _amount = _amount! -
+                                                        widget.amount as int?;
 
                                                     onPressed('null');
                                                   }
@@ -298,7 +297,7 @@ class _ItemsContainerState extends State<ItemsContainer> {
                                                     color: Colors.white),
                                                 onTap: () {
                                                   var dataByName = Provider.of<
-                                                              IsInList>(context,
+                                                              IsInListProvider>(context,
                                                           listen: false)
                                                       .getDetailsByName(_name);
                                                   _amount = dataByName != null
@@ -308,10 +307,10 @@ class _ItemsContainerState extends State<ItemsContainer> {
                                                       ? dataByName['quantity']
                                                       : 0;
 //
-                                                  _quantity = _quantity +
-                                                      widget.quantity;
-                                                  _amount =
-                                                      _amount + widget.amount;
+                                                  _quantity = _quantity! +
+                                                      widget.quantity!;
+                                                  _amount = _amount! +
+                                                      widget.amount as int?;
                                                   onPressed('null');
                                                   setState(() {});
                                                 },
@@ -335,10 +334,10 @@ class _ItemsContainerState extends State<ItemsContainer> {
                             // add to cart button
                             Container(
                               alignment: Alignment.center,
-                              child: Consumer<IsInList>(
+                              child: Consumer<IsInListProvider>(
                                   builder: (context, isInList, child) {
                                 var _detail;
-                                var _allDetails = isInList.allDetails ?? [];
+                                var _allDetails = isInList.allDetails;
                                 for (var _details in _allDetails) {
                                   if (_details['name'] == _name) {
                                     _detail = true;

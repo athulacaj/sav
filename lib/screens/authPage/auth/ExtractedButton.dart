@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 class ExtractedButton extends StatelessWidget {
   ExtractedButton({this.text, this.colour, this.onclick, this.textColour});
-  final String text;
-  final Color colour;
-  final Color textColour;
-  final Function onclick;
+  final String? text;
+  final Color? colour;
+  final Color? textColour;
+  final Function? onclick;
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +16,11 @@ class ExtractedButton extends StatelessWidget {
         color: colour,
         borderRadius: BorderRadius.circular(10.0),
         child: MaterialButton(
-          onPressed: onclick,
+          onPressed: onclick as void Function()?,
           minWidth: 200.0,
           height: 42.0,
           child: Text(
-            text,
+            text!,
             style: TextStyle(
                 color: textColour != null ? textColour : Colors.white),
           ),

@@ -16,8 +16,9 @@ class _SuccessfulPageState extends State<SuccessfulPage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () {
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => HomeScreen()));
+        // Navigator.pushReplacement(
+        //     context, MaterialPageRoute(builder: (context) => HomeScreen()));
+        Navigator.popUntil(context, ModalRoute.withName(HomeScreen.id));
         return new Future(() => false);
       },
       child: Scaffold(
@@ -50,23 +51,23 @@ class _SuccessfulPageState extends State<SuccessfulPage> {
                         tween:
                             ColorTween(begin: Colors.white, end: Colors.black),
                         duration: Duration(milliseconds: 2000),
-                        builder: (context, value, child) {
+                        builder: (context, dynamic value, child) {
                           return Text(
                             'Order Placed successfully',
                             style: TextStyle(color: value),
                           );
                         }),
                     Spacer(),
-                    ExtractedButton(
-                      colour: Color(0xff36b58b),
-                      text: 'View orders',
-                      onclick: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => MyOrders()));
-                      },
-                    )
+                    // ExtractedButton(
+                    //   colour: Color(0xff36b58b),
+                    //   text: 'View orders',
+                    //   onclick: () {
+                    //     Navigator.push(
+                    //         context,
+                    //         MaterialPageRoute(
+                    //             builder: (context) => MyOrders()));
+                    //   },
+                    // )
                   ],
                 ),
               ),

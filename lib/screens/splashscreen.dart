@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
 import 'package:provider/provider.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,8 +47,8 @@ class _SplashScreenWindowState extends State<SplashScreenWindow> {
     if (userData == "null" || userData == '') {
       return false;
     } else {
-      Map user = jsonDecode(userData);
-      Provider.of<IsInList>(context, listen: false).addUser(user);
+      Map? user = jsonDecode(userData);
+      Provider.of<IsInListProvider>(context, listen: false).addUser(user);
       return true;
     }
   }
@@ -86,7 +86,6 @@ class _SplashScreenWindowState extends State<SplashScreenWindow> {
   @override
   Widget build(BuildContext context) {
     return ModalProgressHUD(
-      progressIndicator: RefreshProgressIndicator(),
       inAsyncCall: _showSpinner,
       child: Scaffold(
         backgroundColor: Color(0xff36b58b),

@@ -6,15 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:sav/widgets/ModalProgressHudWidget.dart';
 import 'package:provider/provider.dart';
 import 'package:sav/providers/provider.dart';
 import 'cartDatabase.dart';
 import 'deliverySlot.dart';
 import 'orderSucessFulPage.dart';
 
-int _minimumAmount;
-bool _showSpinner;
+int? _minimumAmount;
+bool? _showSpinner;
 
 class CartPage extends StatefulWidget {
   @override
@@ -23,11 +23,9 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   ScrollController _scrollController = ScrollController();
-  TextEditingController _textEditingController = TextEditingController();
   FocusNode _focus = new FocusNode();
   @override
   void initState() {
-    // TODO: implement initState
     _minimumAmount = 0;
     _showSpinner = true;
     initFunctions();
@@ -42,15 +40,22 @@ class _CartPageState extends State<CartPage> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _scrollController.dispose();
+    _focus.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer<IsInList>(
-      builder: (context, isInList, child) {
-        var _allDetailsList = isInList.allDetails ?? [];
+    return Consumer<IsInListProvider>(
+      builder: (context, isInListProvider, child) {
+        var _allDetailsList = isInListProvider.allDetails;
         // var totalAmount = isInList.totalAmount ?? 0;
         Size size = MediaQuery.of(context).size;
+
         return ModalProgressHUD(
           inAsyncCall: _showSpinner,
-          progressIndicator: RefreshProgressIndicator(),
           child: Scaffold(
             backgroundColor: Colors.white,
             body: Column(
@@ -154,7 +159,7 @@ class _CartPageState extends State<CartPage> {
                                   Spacer(),
                                   SizedBox(
                                     child: Text(
-                                      '${_allDetailsList[index]['quantity']} kg'
+                                      '${_allDetailsList[index]['quantity']} ${_allDetailsList[index]['unit']}'
                                           .split(':')[0],
                                       textAlign: TextAlign.left,
                                     ),
@@ -216,7 +221,8 @@ class _CartPageState extends State<CartPage> {
                             SizedBox(width: 10),
                             GestureDetector(
                               onTap: () {
-                                Provider.of<IsInList>(context, listen: false)
+                                Provider.of<IsInListProvider>(context,
+                                        listen: false)
                                     .removeAllDetails();
                                 setState(() {});
                               },
@@ -232,7 +238,7 @@ class _CartPageState extends State<CartPage> {
                             Spacer(),
                             Text('items:  ',
                                 style: TextStyle(color: Colors.black)),
-                            Consumer<IsInList>(
+                            Consumer<IsInListProvider>(
                                 builder: (context, isInList, child) {
                               return Text(
                                 '${isInList.allDetails.length}',
@@ -247,7 +253,7 @@ class _CartPageState extends State<CartPage> {
                             ),
                             Text('Quantity:  ',
                                 style: TextStyle(color: Colors.black)),
-                            Consumer<IsInList>(
+                            Consumer<IsInListProvider>(
                                 builder: (context, isInList, child) {
                               return Text(
                                 '${isInList.totalQ} kg',
@@ -279,10 +285,36 @@ class _CartPageState extends State<CartPage> {
                       )
                     : GestureDetector(
                         onTap: () async {
+                          Map _userDetails = isInListProvider.userDetails!;
+                          bool _isAdmin = _userDetails['isAdmin'] != null &&
+                              _userDetails['isAdmin'];
+                          List<DocumentSnapshot<Map<String, dynamic>>>
+                              customerDatabaseList = [];
+                          if (_isAdmin) {
+                            _showSpinner = true;
+                            setState(() {});
+                            try {
+                              customerDatabaseList = await FirebaseFirestore
+                                  .instance
+                                  .collection("customers")
+                                  .orderBy("name", descending: false)
+                                  .get()
+                                  .then((value) => value.docs);
+                              customerDatabaseList.removeAt(0);
+                              customerDatabaseList =
+                                  customerDatabaseList.reversed.toList();
+                            } catch (e) {
+                              print(e);
+                            }
+                            _showSpinner = false;
+                            setState(() {});
+                          }
                           Navigator.of(context).push(PageRouteBuilder(
                               pageBuilder:
                                   (context, animation, secondaryAnimation) {
-                            return DeliverySlot();
+                            return DeliverySlot(
+                                customerDatabaseList:
+                                    _isAdmin ? customerDatabaseList : null);
                           }, transitionsBuilder: (context, animation,
                                   secondaryAnimation, child) {
                             var begin = Offset(1.0, 0.0);
@@ -322,19 +354,42 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Future<List> showBottomSheet(var _allDetailsList) {
+  String unit = 'kg';
+  Future<List?> showBottomSheet(var _allDetailsList) {
+    unit = _allDetailsList['unit'];
+    TextEditingController _textEditingController = TextEditingController();
+    _textEditingController.text = _allDetailsList['quantity'].toString();
     return showModalBottomSheet<List>(
-      isScrollControlled: false,
+      isScrollControlled: true,
       context: context,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
       ),
       builder: (BuildContext context) {
-        _textEditingController.text = _allDetailsList['quantity'].toString();
         int selectedDeliveryBoy = -1;
         int selectedShop = -1;
         return StatefulBuilder(builder: (context, StateSetter setState) {
           Size size = MediaQuery.of(context).size;
+          Widget dropDown = DropdownButton<String>(
+            value: unit,
+            icon: const Icon(Icons.arrow_drop_down_circle_outlined),
+            iconSize: 30,
+            elevation: 6,
+            style: const TextStyle(color: Colors.blue, fontSize: 18),
+            onChanged: (String? newValue) {
+              setState(() {
+                unit = newValue!;
+              });
+            },
+            items: <String>['kg', 'no']
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          );
+
           return SingleChildScrollView(
             controller: _scrollController,
             child: Container(
@@ -390,22 +445,24 @@ class _CartPageState extends State<CartPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
+                          padding: EdgeInsets.all(6),
                           alignment: Alignment.center,
                           child: SizedBox(
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 SizedBox(
                                   child: TextField(
-                                    focusNode: _focus,
                                     controller: _textEditingController,
+                                    autofocus: true,
                                     textAlign: TextAlign.center,
                                     style:
                                         TextStyle(fontWeight: FontWeight.w600),
                                     keyboardType: TextInputType.number,
                                     onTap: () {
-                                      _scrollController.animateTo(130,
-                                          duration: Duration(milliseconds: 200),
-                                          curve: Curves.linear);
+                                      // _scrollController.animateTo(130,
+                                      //     duration: Duration(milliseconds: 200),
+                                      //     curve: Curves.linear);
                                     },
                                     decoration: InputDecoration(
                                       //fillColor: Colors.green
@@ -415,17 +472,16 @@ class _CartPageState extends State<CartPage> {
                                         'Qty : ',
                                         style: TextStyle(color: Colors.black54),
                                       ),
-                                      suffix: Text(
-                                        'kg',
-                                        style: TextStyle(color: Colors.black54),
-                                      ),
                                     ),
                                   ),
                                   width: 100,
                                 ),
+                                SizedBox(width: 10),
+                                Container(
+                                    alignment: Alignment.bottomCenter,
+                                    child: dropDown)
                               ],
                             ),
-                            width: 150,
                           ),
                           height: 50,
                           width: size.width - 136,
@@ -496,7 +552,7 @@ class _CartPageState extends State<CartPage> {
                                 child: Material(
                                   child: InkWell(
                                     onTap: () {
-                                      Provider.of<IsInList>(context,
+                                      Provider.of<IsInListProvider>(context,
                                               listen: false)
                                           .removeByName(
                                               _allDetailsList['name']);
@@ -570,19 +626,20 @@ class _CartPageState extends State<CartPage> {
     if (whatButton == 'add') {
       Map individualItem = {
         'name': '${_allDetailsList['name']}',
+        'en': '${_allDetailsList['en']}',
         'image': '${_allDetailsList['image']}',
         'amount': _allDetailsList['amount'],
-        'unit': _allDetailsList['unit'],
+        'unit': unit,
         'quantity': inputQuantity,
         'baseAmount': _allDetailsList['amount'],
         'baseQuantity': _allDetailsList['baseQuantity'],
         'shopName': '${_allDetailsList['shopName']}',
         'imageType': _allDetailsList['imageType'],
       };
-      Provider.of<IsInList>(context, listen: false)
+      Provider.of<IsInListProvider>(context, listen: false)
           .addAllDetails(individualItem, context);
     } else {
-      Provider.of<IsInList>(context, listen: false)
+      Provider.of<IsInListProvider>(context, listen: false)
           .removeByName(_allDetailsList['name']);
     }
   }

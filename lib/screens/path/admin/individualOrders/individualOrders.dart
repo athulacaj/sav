@@ -13,24 +13,24 @@ String _whichType = 'all';
 FirebaseFirestore _firestore = FirebaseFirestore.instance;
 List _orders = [];
 bool isDataAvailable = false;
-List<DocumentSnapshot> _details = [];
+List<DocumentSnapshot<Map<String, dynamic>>> _details = [];
 List<Widget> columWidget = [];
 
 class IndividualOrders extends StatefulWidget {
-  final String uid;
+  final String? uid;
   final orderedTimeFrmPrvsScreen;
   final orderNumber;
-  final String bytimeId;
-  final String id;
-  final Map allData;
+  final String? bytimeId;
+  final String? IndividualID;
+  final Map? allData;
   final refNo;
   IndividualOrders(
       {this.uid,
       this.orderedTimeFrmPrvsScreen,
       this.orderNumber,
       this.refNo,
-      this.id,
-      @required this.allData,
+      this.IndividualID,
+      required this.allData,
       this.bytimeId});
   @override
   _IndividualOrdersState createState() => _IndividualOrdersState();
@@ -42,7 +42,7 @@ class _IndividualOrdersState extends State<IndividualOrders> {
     _whichType = 'Order';
     columWidget = [];
     print(widget.uid);
-    print(widget.id);
+    print(widget.IndividualID);
     super.initState();
   }
 
@@ -57,16 +57,18 @@ class _IndividualOrdersState extends State<IndividualOrders> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          StreamBuilder<DocumentSnapshot>(
+          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             stream: _firestore
                 .collection('orders/by/${widget.uid}')
 //                .where('status', isEqualTo: '$_whichType')
-                .doc(widget.id)
+                .doc(widget.IndividualID!)
                 .snapshots(),
-            builder: (context, snapshot) {
+            builder: (context,
+                AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>>
+                    snapshot) {
               if (snapshot.hasData) {
-                _details = [snapshot.data];
-                print(snapshot.data['details']);
+                _details = [snapshot.data!];
+                print(snapshot.data!['details']);
               } else {
                 _details = [];
               }
@@ -81,16 +83,19 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                       EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 8),
                   itemCount: _details.length,
                   itemBuilder: (BuildContext context, int index) {
-                    List ordersList = _details[index].data()['details'];
-                    Timestamp orderedTime = _details[index].data()['time'];
-                    Timestamp deliveredTime =
-                        _details[index].data()['deliveredTime'] ?? null;
-                    var _deliverySolot = _details[index].data()['deliverySlot'];
+                    List ordersList = _details[index].data()!['details'];
+                    Timestamp orderedTime = _details[index].data()!['time'];
+                    Timestamp deliveryDate =
+                        _details[index].data()!['deliveryDate'];
+                    Timestamp? deliveredTime =
+                        _details[index].data()!['deliveredTime'] ?? null;
+                    var _deliverySolot =
+                        _details[index].data()!['deliverySlot'];
                     // String fcmId = _details[index].data()['fcmId'];
-                    String status = _details[index].data()['status'];
+                    String? status = _details[index].data()!['status'];
 
                     String _documentId = (_details[index].id);
-                    int total = 0;
+                    int? total = 0;
                     columWidget = [];
                     for (Map individualorder in ordersList) {
                       total = individualorder['amount'] + total;
@@ -129,7 +134,10 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                               ],
                             )),
                             SizedBox(width: 8),
-                            Text('${individualorder['quantity']} kg'),
+                            Text(
+                              '${individualorder['quantity']} ${individualorder['unit']}',
+                              textAlign: TextAlign.start,
+                            ),
                           ],
                         ),
                       );
@@ -238,7 +246,7 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                                     child: Column(
                                       children: [
                                         Text(
-                                          '${_details[index].data()['userData']['name']}',
+                                          '${_details[index].data()!['userData']['name']}',
                                           style: TextStyle(
                                               fontSize: 14,
                                               color: Colors.black,
@@ -249,7 +257,7 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                                               MainAxisAlignment.start,
                                           children: [
                                             Text(
-                                              '${_details[index].data()['userData']['phone']}',
+                                              '${_details[index].data()!['userData']['phone']}',
                                               style: TextStyle(
                                                   fontSize: 14,
                                                   color: Colors.black,
@@ -260,7 +268,7 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                                                   size: 30, color: Colors.blue),
                                               onPressed: () {
                                                 launchCaller(_details[index]
-                                                        .data()['userData']
+                                                        .data()!['userData']
                                                     ['phone']);
                                               },
                                             )
@@ -303,8 +311,8 @@ class _IndividualOrdersState extends State<IndividualOrders> {
 //
                                 await _firestore
                                     .collection(
-                                        'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
-                                    .doc(widget.bytimeId)
+                                        'orders/byTime/${deliveryDate.toDate().toString().substring(0, 10)}')
+                                    .doc(widget.bytimeId!)
                                     .update({
                                   'status': 'delivered',
                                   'deliveredTime': DateTime.now(),
@@ -321,8 +329,8 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                                 });
                                 await _firestore
                                     .collection(
-                                        'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
-                                    .doc(widget.bytimeId)
+                                        'orders/byTime/${deliveryDate.toDate().toString().substring(0, 10)}')
+                                    .doc(widget.bytimeId!)
                                     .update({
                                   'status': 'ordered',
                                   'deliveredTime': null,
@@ -351,8 +359,8 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                               });
                               await _firestore
                                   .collection(
-                                      'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
-                                  .doc(widget.bytimeId)
+                                      'orders/byTime/${deliveryDate.toDate().toString().substring(0, 10)}')
+                                  .doc(widget.bytimeId!)
                                   .update({
                                 'status': 'confirmed',
                                 'deliveredTime': null,
@@ -376,10 +384,12 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                                 'deliveredTime': null,
                                 'status': 'canceled'
                               });
+                              print(
+                                  'orders/byTime/${deliveryDate.toDate().toString().substring(0, 10)} ${widget.bytimeId}');
                               await _firestore
                                   .collection(
-                                      'orders/byTime/${orderedTime.toDate().toString().substring(0, 10)}')
-                                  .doc(widget.bytimeId)
+                                      'orders/byTime/${deliveryDate.toDate().toString().substring(0, 10)}')
+                                  .doc(widget.bytimeId!)
                                   .update({
                                 'status': 'canceled',
                                 'deliveredTime': null,
@@ -403,7 +413,7 @@ class _IndividualOrdersState extends State<IndividualOrders> {
                   context,
                   MaterialPageRoute(
                       builder: (BuildContext context) => ThermalPrint(
-                            widget.allData['details'],
+                            widget.allData!['details'],
                             widget.allData,
                             widget.refNo,
                           )));
@@ -426,7 +436,7 @@ class _IndividualOrdersState extends State<IndividualOrders> {
   }
 }
 
-launchCaller(String phoneNo) async {
+launchCaller(String? phoneNo) async {
   var _url = "tel:$phoneNo";
   if (await canLaunch(_url)) {
     await launch(_url);

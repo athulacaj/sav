@@ -16,11 +16,15 @@ List _orders = [];
 class MyOrders extends StatefulWidget {
   static String id = 'MyOrders';
 
-  String fromWhere;
+  final String? fromWhere;
   MyOrders({this.fromWhere});
   @override
   _MyOrdersState createState() => _MyOrdersState();
 }
+
+late IsInListProvider isInListProvider;
+late Map _userDetails;
+bool isAdmin = false;
 
 class _MyOrdersState extends State<MyOrders> {
   @override
@@ -30,8 +34,17 @@ class _MyOrdersState extends State<MyOrders> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    isInListProvider = Provider.of<IsInListProvider>(context, listen: false);
+    _userDetails = isInListProvider.userDetails!;
+    isAdmin = _userDetails['isAdmin'] != null && _userDetails['isAdmin'];
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var user = Provider.of<IsInList>(context, listen: false).userDetails;
+    var user =
+        Provider.of<IsInListProvider>(context, listen: false).userDetails;
     Size size = MediaQuery.of(context).size;
     return WillPopScope(
       onWillPop: widget.fromWhere == null
@@ -52,12 +65,14 @@ class _MyOrdersState extends State<MyOrders> {
             ),
             user == null
                 ? Container()
-                : StreamBuilder<QuerySnapshot>(
+                : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                     stream: _firestore
                         .collection('orders/by/${user['uid']}')
                         .orderBy('time', descending: true)
                         .snapshots(),
-                    builder: (context, snapshot) {
+                    builder: (context,
+                        AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
+                            snapshot) {
                       if (!snapshot.hasData) {
                         return Container(
                           height: size.height - 74,
@@ -66,17 +81,16 @@ class _MyOrdersState extends State<MyOrders> {
                         );
                       }
                       print('updated');
-                      var _details = snapshot.data.docs;
+                      var _details = snapshot.data!.docs;
                       _orders = [];
                       int _nowInMS = DateTime.now().millisecondsSinceEpoch;
                       DateTime now = DateTime.now();
                       return Expanded(
                         child: ListView.builder(
-                          itemCount: snapshot.data.docs.length,
+                          itemCount: snapshot.data!.docs.length,
                           itemBuilder: (BuildContext context, int i) {
-                            Map allData = snapshot.data.docs[i].data();
-                            DateTime time = allData['time'].toDate();
-
+                            Map allData = snapshot.data!.docs[i].data();
+                            DateTime? time = allData['time'].toDate();
                             return Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: Material(
@@ -110,21 +124,22 @@ class _MyOrdersState extends State<MyOrders> {
                                       SizedBox(height: 15),
                                       Row(
                                         children: [
-                                          Text(
-                                              'Total Quantity : ${totalQuantity(allData['details'])} kg'),
+                                          Text(isAdmin
+                                              ? '${allData['userData']['name']}  - ${allData['userData']['shopName']}'
+                                              : ""),
                                           Spacer(),
                                           TextButton(
                                             onPressed: () {
                                               Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                      builder: (contetx) =>
+                                                      builder: (context) =>
                                                           IndividualOrders(
                                                             allDetails: allData[
                                                                 'details'],
                                                             allData: allData,
                                                             pvsDocId: snapshot
-                                                                .data
+                                                                .data!
                                                                 .docs[i]
                                                                 .id,
                                                           )));

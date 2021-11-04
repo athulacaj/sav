@@ -3,9 +3,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:sav/providers/allOrdersProvider.dart';
 import 'package:sav/providers/provider.dart';
 import 'package:sav/providers/searchProvider.dart';
 import 'package:sav/screens/splashscreen.dart';
+import 'firebaseMessaging.dart';
+import 'screens/path/user/CartPage/autoCompleteName.dart';
 import 'screens/path/user/homeScreen/home.dart';
 import 'screens/path/admin/adminHomeScreen.dart';
 import 'package:flare_flutter/flare_cache.dart';
@@ -14,12 +17,18 @@ import 'navigatorKey.dart';
 
 final navKey = new GlobalKey<NavigatorState>();
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   FlareCache.doesPrune = false;
+  FcmMain.fcmMain();
+  FcmMain.onMessageReceived();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   runApp(MultiProvider(providers: [
-    ChangeNotifierProvider(create: (context) => IsInList()),
+    ChangeNotifierProvider(create: (context) => IsInListProvider()),
     ChangeNotifierProvider(create: (context) => SearchProvider()),
+    ChangeNotifierProvider(create: (context) => AllOrdersProvider()),
   ], child: MyApp()));
 }
 
@@ -29,6 +38,10 @@ class MyApp extends StatelessWidget {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
         statusBarColor: Color(0xff36b58b),
         statusBarIconBrightness: Brightness.light));
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: SplashScreenWindow.id,
@@ -50,6 +63,12 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("Handling a background message");
+  RemoteNotification? notification = message.notification;
+  AndroidNotification? android = message.notification?.android;
 }
 
 Future<void> preCache() async {
