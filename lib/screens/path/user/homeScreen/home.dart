@@ -323,18 +323,18 @@ class _HomeScreenState extends State<HomeScreen>
                                                             AdminHomeScreen()));
                                               },
                                             ),
-                                            GestureDetector(
-                                              child: ExtractedBox(
-                                                  image: 'assets/ask.png',
-                                                  title: 'Validate'),
-                                              onTap: () {
-                                                Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            ValidateOrderScreen()));
-                                              },
-                                            ),
+                                            // GestureDetector(
+                                            //   child: ExtractedBox(
+                                            //       image: 'assets/ask.png',
+                                            //       title: 'Validate'),
+                                            //   onTap: () {
+                                            //     Navigator.push(
+                                            //         context,
+                                            //         MaterialPageRoute(
+                                            //             builder: (context) =>
+                                            //                 ValidateOrderScreen()));
+                                            //   },
+                                            // ),
                                           ],
                                         )
                                       : Container()

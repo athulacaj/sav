@@ -18,15 +18,19 @@ List _orders = [];
 List<DocumentSnapshot<Map<String, dynamic>>> _allOrdersFiltered = [];
 late DateTime _whichDay;
 List whichTypeList = ['all', 'ordered', 'canceled', 'delivered'];
+List areaList = ['all'];
 List<int> selectedList = [];
 bool showPrintOption = false;
 
 class AllOrders extends StatefulWidget {
+  final List areaList;
+  AllOrders({required this.areaList});
   @override
   _AllOrdersState createState() => _AllOrdersState();
 }
 
 String _whichType = 'all';
+String _area = 'all';
 String _whichAdmin = 'all';
 bool showDuplicateBanner = true;
 
@@ -34,6 +38,7 @@ class _AllOrdersState extends State<AllOrders> {
   @override
   void initState() {
     showPrintOption = false;
+    areaList = widget.areaList;
     _whichDay = DateTime.now();
     showDuplicateBanner = true;
     super.initState();
@@ -149,39 +154,52 @@ class _AllOrdersState extends State<AllOrders> {
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
                   children: <Widget>[
-                    StreamBuilder(
-                        stream: _firestore
-                            .collection('users')
-                            .where('isAdmin', isEqualTo: true)
-                            // .orderBy('time', descending: true)
-                            .snapshots(),
-                        builder: (context,
-                            AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
-                                snapshot) {
-                          if (!snapshot.hasData) {
-                            return Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          if (snapshot.hasData == false) {
-                            return Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          List adminsList = snapshot.data!.docs;
-                          AllOrdersProvider.adminsList = adminsList;
-                          return SizedBox(
-                            height: 50,
-                            child: ListView.builder(
-                              itemCount: adminsList.length,
-                              scrollDirection: Axis.horizontal,
-                              itemBuilder: (BuildContext context, int i) {
-                                return filterButton(
-                                    adminsList[i], allOrdersProvider);
-                              },
-                            ),
-                          );
-                        }),
+                    // admin list
+                    // StreamBuilder(
+                    //     stream: _firestore
+                    //         .collection('users')
+                    //         .where('isAdmin', isEqualTo: true)
+                    //         // .orderBy('time', descending: true)
+                    //         .snapshots(),
+                    //     builder: (context,
+                    //         AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
+                    //             snapshot) {
+                    //       if (!snapshot.hasData) {
+                    //         return Center(
+                    //           child: CircularProgressIndicator(),
+                    //         );
+                    //       }
+                    //       if (snapshot.hasData == false) {
+                    //         return Center(
+                    //           child: CircularProgressIndicator(),
+                    //         );
+                    //       }
+                    //       List adminsList = snapshot.data!.docs;
+                    //       AllOrdersProvider.adminsList = adminsList;
+                    //       return SizedBox(
+                    //         height: 50,
+                    //         child: ListView.builder(
+                    //           itemCount: adminsList.length,
+                    //           scrollDirection: Axis.horizontal,
+                    //           itemBuilder: (BuildContext context, int i) {
+                    //             return filterButton(
+                    //                 adminsList[i], allOrdersProvider);
+                    //           },
+                    //         ),
+                    //       );
+                    //     }),
+                    // area list
+                    SizedBox(
+                      height: 50,
+                      child: ListView.builder(
+                        itemCount: areaList.length,
+                        scrollDirection: Axis.horizontal,
+                        itemBuilder: (BuildContext context, int i) {
+                          return areaFilterButton(
+                              areaList[i], allOrdersProvider);
+                        },
+                      ),
+                    ),
                     showDuplicateBanner && _whichAdmin.toLowerCase() == 'all'
                         ? Container(
                             width: size.width,
@@ -357,6 +375,30 @@ class _AllOrdersState extends State<AllOrders> {
                 alignment: Alignment.center,
                 padding: EdgeInsets.all(6),
                 child: Text("${data['name']}")),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget areaFilterButton(String area, AllOrdersProvider allOrdersProvider) {
+    return Padding(
+      padding: const EdgeInsets.all(6.0),
+      child: Material(
+        elevation: 4,
+        child: InkWell(
+          onTap: () {
+            _area = area;
+            allOrdersProvider.filterBaseOnArea(_area, true);
+            selectedList = [];
+          },
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: 70),
+            child: Container(
+                color: _area == area ? Colors.greenAccent : Colors.white,
+                alignment: Alignment.center,
+                padding: EdgeInsets.all(6),
+                child: Text(area)),
           ),
         ),
       ),

@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -17,9 +21,23 @@ import 'navigatorKey.dart';
 
 final navKey = new GlobalKey<NavigatorState>();
 
+Future _connectToFirebaseEmulator() async {
+  final localHostString = Platform.isAndroid ? '10.0.2.2' : 'localhost';
+
+  FirebaseFirestore.instance.settings = Settings(
+    host: '$localHostString:8080',
+    sslEnabled: false,
+    persistenceEnabled: false,
+  );
+
+  await FirebaseAuth.instance.useEmulator('http://$localHostString:9099');
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp();
+
   FlareCache.doesPrune = false;
   FcmMain.fcmMain();
   FcmMain.onMessageReceived();

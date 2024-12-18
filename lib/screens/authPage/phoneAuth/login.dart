@@ -5,6 +5,7 @@ import 'package:country_pickers/country_picker_cupertino.dart';
 import 'package:country_pickers/country_picker_dialog.dart';
 import 'package:country_pickers/utils/utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -35,6 +36,8 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   final _codeController = TextEditingController();
   var _forceCodeResendToken;
   Future<void> loginUser(String phone, BuildContext context) async {
+    await Firebase.initializeApp();
+
     FirebaseAuth _auth = FirebaseAuth.instance;
     _showSpinner = true;
     setState(() {});
@@ -342,9 +345,15 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                         text: 'Login',
                         colour: Color(0xff36b58b),
                         onclick: () async {
-                          final phone = _phoneController.text.trim();
-                          print(phone);
-                          loginUser(phone, context);
+                          if (_phoneController.text.length == 10) {
+                            final phone = _phoneController.text.trim();
+                            print(phone);
+                            loginUser(phone, context);
+                          } else {
+                            Fluttertoast.showToast(
+                                msg: 'Enter a valid number',
+                                backgroundColor: Colors.black45);
+                          }
                         },
                       ),
                       SizedBox(height: 25),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class AllOrdersProvider extends ChangeNotifier {
   static List<DocumentSnapshot<Map<String, dynamic>>> _allOrdersFiltered = [];
+  String _area = 'all';
   static List adminsList = [];
   static Future<void> getOnce() async {
     if (_allOrdersFiltered.isEmpty) {
@@ -39,11 +40,38 @@ class AllOrdersProvider extends ChangeNotifier {
         }
       }
     } else {
+      _allOrdersFiltered = [];
       _allOrdersFiltered = allOrders
-          .where((value) => value.data()!['uid'] == whichType)
+          .where((value) =>
+              value.data()!['uid'] == whichType &&
+              value.data()!['userData']['area'] == _area)
           .toList();
     }
+    print(_allOrdersFiltered);
+    filterArea();
     if (callRefresh) notifyListeners();
+  }
+
+  void filterArea() {
+    if (_area == "all") {
+    } else {
+      List<DocumentSnapshot<Map<String, dynamic>>> temp = [];
+
+      for (DocumentSnapshot<Map<String, dynamic>> snap in _allOrdersFiltered) {
+        if (snap.data()!['userData']['area'] == _area) {
+          temp.add(snap);
+        }
+      }
+      _allOrdersFiltered = temp;
+      print(temp.length);
+    }
+  }
+
+  void filterBaseOnArea(String area, bool callRefresh) {
+    _allOrdersFiltered = [];
+
+    _area = area;
+    notifyListeners();
   }
 
   List<DocumentSnapshot<Map<String, dynamic>>> getFilteredOrdersList() {

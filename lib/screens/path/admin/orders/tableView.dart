@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sav/screens/path/admin/print/mutipleThermalPrint.dart';
+import 'package:sav/screens/path/admin/print/thermalPrint.dart';
 
 Future<List?> showTableBottomSheet(BuildContext context,
     List<DocumentSnapshot<Map<String, dynamic>>>? allOrders, String whichType) {
@@ -23,7 +25,7 @@ Future<List?> showTableBottomSheet(BuildContext context,
           // color: Colors.white,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               SizedBox(height: 9),
               Row(
@@ -51,7 +53,16 @@ Future<List?> showTableBottomSheet(BuildContext context,
                               '$itemName : ${qty.toStringAsFixed(2)} $unit')));
                 },
               )),
-              SizedBox(height: 15),
+              ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                MultipleThermalPrint([], [])));
+                  },
+                  child: Text("   Print   ")),
+              SizedBox(height: 4),
             ],
           ),
         );

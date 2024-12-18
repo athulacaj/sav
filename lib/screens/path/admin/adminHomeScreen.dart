@@ -54,8 +54,17 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     await AllOrdersProvider.getOnce();
                     _showSpinner = false;
                     setState(() {});
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => AllOrders()));
+                    List areaList = (await _firestore
+                            .collection("customers")
+                            .doc("0")
+                            .get())
+                        .data()!['areaList'];
+                    print(areaList);
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                AllOrders(areaList: areaList)));
                   },
                 ),
                 SizedBox(height: 15),

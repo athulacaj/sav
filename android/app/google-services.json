@@ -1,0 +1,122 @@
+{
+  "project_info": {
+    "project_number": "947676953013",
+    "firebase_url": "https://savvegetables-2df8b.firebaseio.com",
+    "project_id": "savvegetables-2df8b",
+    "storage_bucket": "savvegetables-2df8b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:947676953013:android:cede8cb37822ee2fee01fc",
+        "android_client_info": {
+          "package_name": "co.attaras.new_p"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "947676953013-rikk3ccf9gkv1q48t7laa4bo97jkoimn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfwVWXHZY7bPOBFry96qZMMa56AZTHO4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "947676953013-rikk3ccf9gkv1q48t7laa4bo97jkoimn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:947676953013:android:fd4e5821969608e5ee01fc",
+        "android_client_info": {
+          "package_name": "co.attaras.sav"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "947676953013-htu3pi06lsmiu7238b02i5ll2qnv9spa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "co.attaras.sav",
+            "certificate_hash": "23b0c7fbd04f4f6164a3712afbd21a00055b82b8"
+          }
+        },
+        {
+          "client_id": "947676953013-svlvo1cc34vj270e9b7f0t4r8hcsrans.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "co.attaras.sav",
+            "certificate_hash": "d5fcbd5d7cce17791f48ba8d7025fae5d52fbf98"
+          }
+        },
+        {
+          "client_id": "947676953013-v0hbtebsjmot6fc4qe2rdkek13b73u6e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "co.attaras.sav",
+            "certificate_hash": "67f562092487e5812942345e0b890fe8713523e1"
+          }
+        },
+        {
+          "client_id": "947676953013-rikk3ccf9gkv1q48t7laa4bo97jkoimn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfwVWXHZY7bPOBFry96qZMMa56AZTHO4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "947676953013-rikk3ccf9gkv1q48t7laa4bo97jkoimn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:947676953013:android:40a0189eef88fcaeee01fc",
+        "android_client_info": {
+          "package_name": "com.attaras.sav_sales_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "947676953013-rikk3ccf9gkv1q48t7laa4bo97jkoimn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfwVWXHZY7bPOBFry96qZMMa56AZTHO4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "947676953013-rikk3ccf9gkv1q48t7laa4bo97jkoimn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
